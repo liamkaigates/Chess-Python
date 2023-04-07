@@ -1,6 +1,7 @@
 """
 Controls user inpput and displays state of the game
 """
+import pygame as p
 
 class GameState():
     def __init__(self):
@@ -17,6 +18,8 @@ class GameState():
         self.inCheck = False
         self.pins = []
         self.checks = []
+        self.checkMate = False
+        self.staleMate = False
 
     def makeMove(self, move):
         self.board[move.startRow][move.startCol] = "--"
@@ -27,6 +30,10 @@ class GameState():
             self.whiteKingLocation = (move.endRow, move.endCol)
         elif move.pieceMoved == "bK":
             self.blackKingLocation = (move.endRow, move.endCol)
+        if move.isPawnPromotion:
+            idx = wait()
+            self.board[move.endRow][move.endCol] = move.pieceMoved[0] + move.promotionChoice[idx]
+
 
     def undoMove(self):
         if len(self.moveLog) != 0:
@@ -38,6 +45,8 @@ class GameState():
                 self.whiteKingLocation = (move.startRow, move.startCol)
             elif move.pieceMoved == "bK":
                 self.blackKingLocation = (move.startRow, move.startCol)
+            if move.isPawnPromotion:
+                move.isPawnPromotion = not move.isPawnPromotion
         
     def getValidMoves(self):
         moves = []
@@ -280,6 +289,10 @@ class Move():
         self.endCol = endSq[1]
         self.pieceMoved = board[self.startRow][self.startCol]
         self.pieceCaptured = board[self.endRow][self.endCol]
+        self.isPawnPromotion = False
+        self.promotionChoice = {"n": "N", "b": "B", "r":"R", "q":"Q"}
+        if (self.pieceMoved == "wp" and self.endRow == 0) or (self.pieceMoved == "bp" and self.endRow == 7):
+            self.isPawnPromotion = True
         self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol
 
     def __eq__(self, other):
@@ -293,3 +306,18 @@ class Move():
 
     def getRankFile(self, r, c):
         return self.colsToFiles[c] + self.rowsToRank[r]
+
+def wait():
+    while True:
+        for event in p.event.get():
+            if event.type == p.QUIT:
+                p.quit()
+            if event.type == p.KEYDOWN:
+                if event.key == p.K_r:
+                    return "r"
+                elif event.key == p.K_b:
+                    return "b"
+                elif event.key == p.K_q:
+                    return "q"
+                elif event.key == p.K_n:
+                    return "n"
