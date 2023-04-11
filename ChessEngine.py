@@ -134,6 +134,10 @@ class GameState():
         else:
             moves = self.getAllPossibleMoves()
         self.getCastleMoves(kingRow, kingCol, moves)
+        if len(moves) == 0 and self.inCheck:
+            self.checkMate = True
+        elif len(moves) == 0 and not self.inCheck:
+            self.staleMate = True
         return moves
 
     def getAllPossibleMoves(self):
@@ -315,16 +319,17 @@ class GameState():
                 endRow= r + d[0] * i
                 endCol = c + d[1] * i
                 if 0 <= endRow < 8 and 0 <= endCol < 8:
-                    endPiece = self.board[endRow][endCol]
-                    if endPiece == "--":
-                        moves.append(Move((r, c), (endRow, endCol), self.board))
-                    elif endPiece[0] == enemyColor:
-                        moves.append(Move((r, c), (endRow, endCol), self.board))
-                        break
+                    if not piecePinned or pinDirection == d or pinDirection == (-d[0], -d[1]):
+                        endPiece = self.board[endRow][endCol]
+                        if endPiece == "--":
+                            moves.append(Move((r, c), (endRow, endCol), self.board))
+                        elif endPiece[0] == enemyColor:
+                            moves.append(Move((r, c), (endRow, endCol), self.board))
+                            break
+                        else:
+                            break
                     else:
                         break
-                else:
-                    break
     
     def getQueenMoves(self, r, c, moves):
         self.getBishopMoves(r, c, moves)
