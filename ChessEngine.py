@@ -53,6 +53,7 @@ class GameState():
         self.castleRightsLog.append(CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs))
         self.currentCastlingRights = self.castleRightsLog[-1]
         self.updateCastleRights(move)
+        print(move.getChessNotation())
 
     def undoMove(self):
         if len(self.moveLog) != 0:
@@ -211,7 +212,7 @@ class GameState():
             if self.board[r-1][c] == "--":
                 if not piecePinned or pinDirection == (-1, 0):
                     moves.append(Move((r,c), (r-1, c), self.board))
-                    if self.board[r - 2][c] == "--" and r == 6:
+                    if r == 6 and self.board[r - 2][c] == "--":
                         moves.append(Move((r,c), (r-2, c), self.board))
             if c - 1 >= 0:
                 if self.board[r - 1][c - 1][0] == "b":
@@ -230,7 +231,7 @@ class GameState():
             if self.board[r+1][c] == "--":
                 if not piecePinned or pinDirection == (1, 0):
                     moves.append(Move((r,c), (r+1, c), self.board))
-                    if self.board[r + 2][c] == "--" and r == 1:
+                    if r == 1 and self.board[r + 2][c] == "--":
                         moves.append(Move((r,c), (r+2, c), self.board))
             if c - 1 >= 0:
                 if self.board[r + 1][c - 1][0] == "w":

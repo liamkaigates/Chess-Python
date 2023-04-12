@@ -5,6 +5,7 @@ Keeps track of moves throughout the game.
 
 import pygame as p
 import ChessEngine
+import ChessAI
 
 WIDTH = HEIGHT = 512
 DIMENSION = 8
@@ -32,12 +33,15 @@ def main():
     sqSelected = ()
     playerClicks = []
     gameOver = False
+    playerOne = False # True == Human / False (0 - 2 for level) == Computer
+    playerTwo = False
     while running:
+        humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
             elif e.type == p.MOUSEBUTTONDOWN:
-                if not gameOver:
+                if not gameOver and humanTurn:
                     location = p.mouse.get_pos()
                     col = location[0] // SQ_SIZE
                     row = location[1] // SQ_SIZE
@@ -72,6 +76,12 @@ def main():
                     moveMade = False
                     animate = False
                     gameOver = False
+        if not gameOver and not humanTurn:
+            gs.makeMove(ChessAI.findRandomMove(validMoves))
+            moveMade = True
+            animate = True
+            sqSelected = ()
+            playerClicks = []
                     
         if moveMade:
             if animate:
