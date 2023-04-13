@@ -152,13 +152,15 @@ class GameState():
         return moves
 
     def getInsufficientMaterial(self):
-        if len(self.pieces) == 3 and "wK" in self.pieces and "bK" in self.pieces and "wB" in self.pieces and "bB" in self.pieces:
+        if len(self.pieces) == 4 and "wK" in self.pieces and "bK" in self.pieces and "wB" in self.pieces and "bB" in self.pieces:
             for row in range(8):
                 for col in range(8):
                     if self.board[row][col] == "wB":
                         whiteNum = (row + col) % 2
                     elif self.board[row][col] == "bB":
                         blackNum = (row + col) % 2
+            print(whiteNum)
+            print(blackNum)
             return whiteNum == blackNum
 
         if len(self.pieces) == 3 and "wK" in self.pieces and "bK" in self.pieces and ("wB" in self.pieces or "bB" in self.pieces):

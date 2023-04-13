@@ -33,7 +33,7 @@ def main():
     sqSelected = ()
     playerClicks = []
     gameOver = False
-    playerOne = False # True == Human / False (0 - 2 for level) == Computer
+    playerOne = True # True == Human / False (0 - 2 for level) == Computer
     playerTwo = False
     while running:
         humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
@@ -58,6 +58,7 @@ def main():
                             if move == validMoves[i]:
                                 gs.makeMove(validMoves[i])
                                 moveMade = True
+                                undoMade = True
                                 animate = True
                                 sqSelected = ()
                                 playerClicks = []
