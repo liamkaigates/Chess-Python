@@ -9,6 +9,7 @@ class GameState():
         ["bp" for i in range(8)], ["--" for i in range(8)], 
         ["--" for i in range(8)], ["--" for i in range(8)], ["--" for i in range(8)], 
         ["wp" for i in range(8)], ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
+        self.pieces = ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR", "bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp", "wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp", "wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         self.whiteToMove = True
         self.moveLog = []
         self.moveFunctions = {"p": self.getPawnMoves, "R":self.getRookMoves, "N": self.getKnightMoves,
@@ -20,6 +21,7 @@ class GameState():
         self.checks = []
         self.checkMate = False
         self.staleMate = False
+        self.insufficientMaterial = False
         self.enpassantPossible = ()
         self.currentCastlingRights = CastleRights(True, True, True, True)
         self.castleRightsLog = [CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs)]
@@ -36,6 +38,8 @@ class GameState():
         if move.isPawnPromotion:
             idx = wait()
             self.board[move.endRow][move.endCol] = move.pieceMoved[0] + move.promotionChoice[idx]
+            self.pieces.remove(move.pieceMoved)
+            self.pieces.append(move.pieceMoved[0] + move.promotionChoice[idx])
         if move.isEnpassantMove:
             self.board[move.startRow][move.endCol] = "--"
         if move.pieceMoved[1] == "p" and abs(move.startRow - move.endRow) == 2:
@@ -53,6 +57,9 @@ class GameState():
         self.castleRightsLog.append(CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs))
         self.currentCastlingRights = self.castleRightsLog[-1]
         self.updateCastleRights(move)
+        if move.pieceCaptured in self.pieces:
+            self.pieces.remove(move.pieceCaptured)
+        print(self.pieces)
         print(move.getChessNotation())
 
     def undoMove(self):
@@ -82,7 +89,9 @@ class GameState():
                     self.board[move.endRow][move.endCol + 1] = "--"
             self.castleRightsLog.pop()
             self.currentCastlingRights = self.castleRightsLog[-1]
-            print(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs)
+            if move.pieceCaptured != "--":
+                self.pieces.append(move.pieceCaptured)
+            
 
     def updateCastleRights(self, move):
         if move.pieceMoved == "wK":
@@ -138,7 +147,26 @@ class GameState():
             self.checkMate = True
         elif len(moves) == 0 and not self.inCheck:
             self.staleMate = True
+        elif self.getInsufficientMaterial():
+            self.insufficientMaterial = True
         return moves
+
+    def getInsufficientMaterial(self):
+        if len(self.pieces) == 3 and "wK" in self.pieces and "bK" in self.pieces and "wB" in self.pieces and "bB" in self.pieces:
+            for row in range(8):
+                for col in range(8):
+                    if self.board[row][col] == "wB":
+                        whiteNum = (row + col) % 2
+                    elif self.board[row][col] == "bB":
+                        blackNum = (row + col) % 2
+            return whiteNum == blackNum
+
+        if len(self.pieces) == 3 and "wK" in self.pieces and "bK" in self.pieces and ("wB" in self.pieces or "bB" in self.pieces):
+            return True
+        elif len(self.pieces) == 3 and "wK" in self.pieces and "bK" in self.pieces and ("wN" in self.pieces or "bN" in self.pieces):
+            return True
+        elif len(self.pieces) == 2 and "wK" in self.pieces and "bK" in self.pieces:
+            return True
 
     def getAllPossibleMoves(self):
         moves = []

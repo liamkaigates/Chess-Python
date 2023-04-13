@@ -77,7 +77,7 @@ def main():
                     animate = False
                     gameOver = False
         if not gameOver and not humanTurn:
-            gs.makeMove(ChessAI.findRandomMove(validMoves))
+            gs.makeMove(ChessAI.findBestMove(validMoves))
             moveMade = True
             animate = True
             sqSelected = ()
@@ -98,7 +98,10 @@ def main():
                 drawText(screen, "White wins by checkmate!")
         elif gs.staleMate:
             gameOver = True
-            drawText(screen, "Tie by stalemate!")
+            drawText(screen, "Draw by stalemate!")
+        elif gs.insufficientMaterial:
+            gameOver = True
+            drawText(screen, "Draw by insufficient matierial!")
         clock.tick(MAX_FPS)
         p.display.flip()
 
