@@ -2,6 +2,7 @@
 Controls user inpput and displays state of the game
 """
 import pygame as p
+import copy
 
 class GameState():
     def __init__(self):
@@ -19,9 +20,13 @@ class GameState():
         self.inCheck = False
         self.pins = []
         self.checks = []
+        self.boardLog = [copy.deepcopy(self.board)]
         self.checkMate = False
         self.staleMate = False
         self.insufficientMaterial = False
+        self.threefoldRepition = False
+        self.fiftyMoveDraw = False
+        self.noCaptureCount = 0
         self.enpassantPossible = ()
         self.currentCastlingRights = CastleRights(True, True, True, True)
         self.castleRightsLog = [CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs)]
@@ -53,12 +58,21 @@ class GameState():
             else:
                 self.board[move.endRow][move.endCol + 1] = self.board[move.endRow][move.endCol - 2]
                 self.board[move.endRow][move.endCol - 2] = "--"
+
         
         self.castleRightsLog.append(CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs))
         self.currentCastlingRights = self.castleRightsLog[-1]
         self.updateCastleRights(move)
         if move.pieceCaptured in self.pieces:
             self.pieces.remove(move.pieceCaptured)
+            self.noCaptureCount = 0
+        else:
+            self.noCaptureCount += 1
+            if self.noCaptureCount >= 50:
+                self.fiftyMoveDraw = True
+        self.boardLog.append(copy.deepcopy(self.board))
+        if self.boardLog.count(self.boardLog[-1]) == 3:
+            self.threefoldRepition = True
         print(self.pieces)
         print(move.getChessNotation())
 
@@ -91,6 +105,7 @@ class GameState():
             self.currentCastlingRights = self.castleRightsLog[-1]
             if move.pieceCaptured != "--":
                 self.pieces.append(move.pieceCaptured)
+            self.boardLog.pop()
             
 
     def updateCastleRights(self, move):
@@ -159,8 +174,6 @@ class GameState():
                         whiteNum = (row + col) % 2
                     elif self.board[row][col] == "bB":
                         blackNum = (row + col) % 2
-            print(whiteNum)
-            print(blackNum)
             return whiteNum == blackNum
 
         if len(self.pieces) == 3 and "wK" in self.pieces and "bK" in self.pieces and ("wB" in self.pieces or "bB" in self.pieces):

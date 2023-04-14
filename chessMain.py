@@ -33,7 +33,7 @@ def main():
     sqSelected = ()
     playerClicks = []
     gameOver = False
-    playerOne = True # True == Human / False (0 - 2 for level) == Computer
+    playerOne = False # True == Human / False (0 - 2 for level) == Computer
     playerTwo = False
     while running:
         humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
@@ -66,9 +66,10 @@ def main():
                             playerClicks = [sqSelected]
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_z:
-                    gs.undoMove()
-                    moveMade = True
-                    animate = False
+                    if not gameOver:
+                        gs.undoMove()
+                        moveMade = True
+                        animate = False
                 if e.key == p.K_r and gameOver:
                     gs = ChessEngine.GameState()
                     validMoves = gs.getValidMoves()
@@ -103,6 +104,12 @@ def main():
         elif gs.insufficientMaterial:
             gameOver = True
             drawText(screen, "Draw by insufficient matierial!")
+        elif gs.threefoldRepition:
+            gameOver = True
+            drawText(screen, "Draw by threefold repetition!")
+        elif gs.fiftyMoveDraw:
+            gameOver = True
+            drawText(screen, "Draw by fifty move rule!")
         clock.tick(MAX_FPS)
         p.display.flip()
 
