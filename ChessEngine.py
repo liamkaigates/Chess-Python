@@ -27,11 +27,12 @@ class GameState():
         self.threefoldRepition = False
         self.fiftyMoveDraw = False
         self.noCaptureCount = 0
+        self.prevCount = []
         self.enpassantPossible = ()
         self.currentCastlingRights = CastleRights(True, True, True, True)
         self.castleRightsLog = [CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs)]
 
-    def makeMove(self, move):
+    def makeMove(self, move, calculate=False):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move)
@@ -41,7 +42,10 @@ class GameState():
         elif move.pieceMoved == "bK":
             self.blackKingLocation = (move.endRow, move.endCol)
         if move.isPawnPromotion:
-            idx = wait()
+            if calculate:
+                idx = "q"
+            else:
+                 idx = wait()
             self.board[move.endRow][move.endCol] = move.pieceMoved[0] + move.promotionChoice[idx]
             self.pieces.remove(move.pieceMoved)
             self.pieces.append(move.pieceMoved[0] + move.promotionChoice[idx])
@@ -65,16 +69,16 @@ class GameState():
         self.updateCastleRights(move)
         if move.pieceCaptured in self.pieces:
             self.pieces.remove(move.pieceCaptured)
+            self.prevCount.append(self.noCaptureCount)
             self.noCaptureCount = 0
         else:
             self.noCaptureCount += 1
             if self.noCaptureCount >= 50:
                 self.fiftyMoveDraw = True
         self.boardLog.append(copy.deepcopy(self.board))
-        if self.boardLog.count(self.boardLog[-1]) == 3:
-            self.threefoldRepition = True
-        print(self.pieces)
-        print(move.getChessNotation())
+        if len(self.boardLog) >= 8:
+            if self.boardLog.count(self.boardLog[-1]) == 3 and self.boardLog.count(self.boardLog[-2]) == 3:
+                self.threefoldRepition = True
 
     def undoMove(self):
         if len(self.moveLog) != 0:
@@ -88,6 +92,8 @@ class GameState():
                 self.blackKingLocation = (move.startRow, move.startCol)
             if move.isPawnPromotion:
                 move.isPawnPromotion = not move.isPawnPromotion
+                self.pieces.pop()
+                self.pieces.append(move.pieceMoved)
             if move.isEnpassantMove:
                 self.board[move.endRow][move.endCol] = "--"
                 self.board[move.startRow][move.endCol] = move.pieceCaptured
@@ -105,6 +111,9 @@ class GameState():
             self.currentCastlingRights = self.castleRightsLog[-1]
             if move.pieceCaptured != "--":
                 self.pieces.append(move.pieceCaptured)
+                self.noCaptureCount = self.prevCount[-1]
+            else:
+                self.noCaptureCount -= 1
             self.boardLog.pop()
             
 

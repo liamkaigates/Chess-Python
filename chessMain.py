@@ -33,8 +33,9 @@ def main():
     sqSelected = ()
     playerClicks = []
     gameOver = False
-    playerOne = False # True == Human / False (0 - 2 for level) == Computer
+    playerOne = True # True == Human / False (0 - 2 for level) == Computer
     playerTwo = False
+    resetSkip = False
     while running:
         humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
         for e in p.event.get():
@@ -68,8 +69,9 @@ def main():
                 if e.key == p.K_z:
                     if not gameOver:
                         gs.undoMove()
-                        moveMade = True
+                        moveMade = False
                         animate = False
+                        resetSkip = True
                 if e.key == p.K_r and gameOver:
                     gs = ChessEngine.GameState()
                     validMoves = gs.getValidMoves()
@@ -78,8 +80,9 @@ def main():
                     moveMade = False
                     animate = False
                     gameOver = False
-        if not gameOver and not humanTurn:
-            gs.makeMove(ChessAI.findBestMove(validMoves))
+                    resetSkip = True
+        if not gameOver and not humanTurn and not resetSkip:
+            gs.makeMove(ChessAI.findBestMove(gs, validMoves))
             moveMade = True
             animate = True
             sqSelected = ()
@@ -110,6 +113,7 @@ def main():
         elif gs.fiftyMoveDraw:
             gameOver = True
             drawText(screen, "Draw by fifty move rule!")
+        resetSkip = False
         clock.tick(MAX_FPS)
         p.display.flip()
 
