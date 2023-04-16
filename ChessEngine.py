@@ -76,7 +76,7 @@ class GameState():
             if self.noCaptureCount >= 50:
                 self.fiftyMoveDraw = True
         self.boardLog.append(copy.deepcopy(self.board))
-        if len(self.boardLog) >= 8:
+        if len(self.boardLog) >= 8 and not calculate:
             if self.boardLog.count(self.boardLog[-1]) == 3 and self.boardLog.count(self.boardLog[-2]) == 3:
                 self.threefoldRepition = True
 
@@ -115,6 +115,8 @@ class GameState():
             else:
                 self.noCaptureCount -= 1
             self.boardLog.pop()
+            self.checkMate = False
+            self.staleMate = False
             
 
     def updateCastleRights(self, move):

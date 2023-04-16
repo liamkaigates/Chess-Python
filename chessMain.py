@@ -33,7 +33,7 @@ def main():
     sqSelected = ()
     playerClicks = []
     gameOver = False
-    playerOne = True # True == Human / False (0 - 2 for level) == Computer
+    playerOne = False # True == Human / False (0 - 2 for level) == Computer
     playerTwo = False
     resetSkip = False
     while running:
@@ -82,7 +82,7 @@ def main():
                     gameOver = False
                     resetSkip = True
         if not gameOver and not humanTurn and not resetSkip:
-            gs.makeMove(ChessAI.findBestMove(gs, validMoves))
+            gs.makeMove(ChessAI.findBestMoveMinMax(gs, validMoves))
             moveMade = True
             animate = True
             sqSelected = ()
