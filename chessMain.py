@@ -72,6 +72,7 @@ def main():
                         moveMade = False
                         animate = False
                         resetSkip = True
+                        validMoves = gs.getValidMoves()
                 if e.key == p.K_r and gameOver:
                     gs = ChessEngine.GameState()
                     validMoves = gs.getValidMoves()
@@ -82,7 +83,7 @@ def main():
                     gameOver = False
                     resetSkip = True
         if not gameOver and not humanTurn and not resetSkip:
-            gs.makeMove(ChessAI.findBestMoveMinMax(gs, validMoves))
+            gs.makeMove(ChessAI.findBestMoveAlphaBeta(gs, validMoves))
             moveMade = True
             animate = True
             sqSelected = ()

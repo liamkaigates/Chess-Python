@@ -67,11 +67,11 @@ class GameState():
         self.castleRightsLog.append(CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs))
         self.currentCastlingRights = self.castleRightsLog[-1]
         self.updateCastleRights(move)
-        if move.pieceCaptured in self.pieces:
+        if move.pieceCaptured in self.pieces and not calculate:
             self.pieces.remove(move.pieceCaptured)
             self.prevCount.append(self.noCaptureCount)
             self.noCaptureCount = 0
-        else:
+        elif not calculate:
             self.noCaptureCount += 1
             if self.noCaptureCount >= 50:
                 self.fiftyMoveDraw = True
@@ -80,7 +80,7 @@ class GameState():
             if self.boardLog.count(self.boardLog[-1]) == 3 and self.boardLog.count(self.boardLog[-2]) == 3:
                 self.threefoldRepition = True
 
-    def undoMove(self):
+    def undoMove(self, capture=False):
         if len(self.moveLog) != 0:
             move = self.moveLog.pop()
             self.board[move.startRow][move.startCol] = move.pieceMoved
@@ -109,7 +109,7 @@ class GameState():
                     self.board[move.endRow][move.endCol + 1] = "--"
             self.castleRightsLog.pop()
             self.currentCastlingRights = self.castleRightsLog[-1]
-            if move.pieceCaptured != "--":
+            if move.pieceCaptured != "--" and not capture:
                 self.pieces.append(move.pieceCaptured)
                 self.noCaptureCount = self.prevCount[-1]
             else:
@@ -386,8 +386,8 @@ class GameState():
                         break
     
     def getQueenMoves(self, r, c, moves):
-        self.getBishopMoves(r, c, moves)
         self.getRookMoves(r, c, moves)
+        self.getBishopMoves(r, c, moves)
     
     def getKingMoves(self, r, c, moves):
         kingMoves = ((1,1), (1, -1), (1, 0), (0, 1), (0, -1), (-1, 0), (-1, -1), (-1, 1))
