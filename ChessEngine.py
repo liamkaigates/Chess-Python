@@ -29,10 +29,11 @@ class GameState():
         self.noCaptureCount = 0
         self.prevCount = []
         self.enpassantPossible = ()
+        self.enpassantLog = [self.enpassantPossible]
         self.currentCastlingRights = CastleRights(True, True, True, True)
         self.castleRightsLog = [CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs)]
 
-    def makeMove(self, move, calculate=False):
+    def makeMove(self, move, calculate=False, ai=False):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move)
@@ -42,11 +43,12 @@ class GameState():
         elif move.pieceMoved == "bK":
             self.blackKingLocation = (move.endRow, move.endCol)
         if move.isPawnPromotion:
-            if calculate:
+            if ai:
                 idx = "q"
             else:
                  idx = wait()
             self.board[move.endRow][move.endCol] = move.pieceMoved[0] + move.promotionChoice[idx]
+            move.promotedPiece = self.board[move.endRow][move.endCol]
             self.pieces.remove(move.pieceMoved)
             self.pieces.append(move.pieceMoved[0] + move.promotionChoice[idx])
         if move.isEnpassantMove:
@@ -67,6 +69,7 @@ class GameState():
         self.castleRightsLog.append(CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs))
         self.currentCastlingRights = self.castleRightsLog[-1]
         self.updateCastleRights(move)
+        self.enpassantLog.append(self.enpassantPossible)
         if move.pieceCaptured in self.pieces and not calculate:
             self.pieces.remove(move.pieceCaptured)
             self.prevCount.append(self.noCaptureCount)
@@ -91,15 +94,13 @@ class GameState():
             elif move.pieceMoved == "bK":
                 self.blackKingLocation = (move.startRow, move.startCol)
             if move.isPawnPromotion:
-                move.isPawnPromotion = not move.isPawnPromotion
                 self.pieces.pop()
                 self.pieces.append(move.pieceMoved)
+                move.promotedPiece = None
             if move.isEnpassantMove:
                 self.board[move.endRow][move.endCol] = "--"
                 self.board[move.startRow][move.endCol] = move.pieceCaptured
                 self.enpassantPossible = (move.endRow, move.endCol)
-            if move.pieceMoved[1] == "p" and abs(move.startRow - move.endRow) == 2:
-                self.enpassantPossible = ()
             if move.isCastleMove:
                 if move.endCol - move.startCol == 2:
                     self.board[move.endRow][move.endCol + 1] = self.board[move.endRow][move.endCol - 1]
@@ -109,6 +110,8 @@ class GameState():
                     self.board[move.endRow][move.endCol + 1] = "--"
             self.castleRightsLog.pop()
             self.currentCastlingRights = self.castleRightsLog[-1]
+            self.enpassantLog.pop()
+            self.enpassantPossible = self.enpassantLog[-1]
             if move.pieceCaptured != "--" and not capture:
                 self.pieces.append(move.pieceCaptured)
                 self.noCaptureCount = self.prevCount[-1]
@@ -450,9 +453,11 @@ class Move():
         self.pieceCaptured = board[self.endRow][self.endCol]
         self.isEnpassantMove = isEnpassantMove
         self.promotionChoice = {"n": "N", "b": "B", "r":"R", "q":"Q"}
+        self.promotedPiece = None
         self.isPawnPromotion = ((self.pieceMoved == "wp" and self.endRow == 0) or (self.pieceMoved == "bp" and self.endRow == 7))
         self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol
         self.isCastleMove = isCastleMove
+        self.isCapture = self.pieceCaptured != "--"
         if self.isEnpassantMove:
             self.pieceCaptured = "wp" if self.pieceMoved == "bp" else "bp"
 
@@ -467,6 +472,33 @@ class Move():
 
     def getRankFile(self, r, c):
         return self.colsToFiles[c] + self.rowsToRank[r]
+    
+    def __str__(self, gs):
+        if self.isCastleMove:
+            return "O-O" if self.endCol == 6 else "O-O-O"
+        endSquare = self.getRankFile(self.endRow, self.endCol)
+        if self.pieceMoved[1] == "p":
+            if self.isCapture:
+                return self.colsToFiles[self.startCol] + "x" + endSquare
+            elif self.isPawnPromotion and self.promotedPiece != None:
+                return endSquare + "=" + self.promotedPiece[1]
+            else:
+                return endSquare
+        else:
+            moveString = self.pieceMoved[1]
+            extra = ""
+            if self.isCapture:
+                extra = "x"
+            elif gs.checkMate:
+                extra = "#"
+            elif gs.inCheck and len(gs.checks) >= 1:
+                extra = "+"
+                if len(gs.checks) == 2:
+                    extra += "+"
+            elif gs.staleMate or gs.insufficientMaterial or gs.threefoldRepition or gs.fiftyMoveDraw:
+                return moveString + endSquare + " ="
+            return moveString + endSquare  
+
 
 def wait():
     while True:

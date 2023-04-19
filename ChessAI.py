@@ -3,7 +3,7 @@ import random
 pieceScore = {"K": 0, "p": 1, "N": 3, "B": 3, "R": 5, "Q":9}
 CHECKMATE = 100
 STALEMATE = 0
-DEPTH = 3
+DEPTH = 2
 
 def findRandomMove(validMoves):
     if len(validMoves) >= 1:
@@ -49,7 +49,6 @@ def findBestMove(gs, validMoves):
             oppMinMaxScore = opponentMaxScore
             bestPlayerMove = playerMove
         gs.undoMove()
-    print(bestPlayerMove.getChessNotation())
     return bestPlayerMove
 
 def findBestMoveMinMax(gs, validMoves):
@@ -93,6 +92,8 @@ def findBestMoveNegaMax(gs, validMoves):
     nextMove = None
     random.shuffle(validMoves)
     findMoveNegaMax(gs, validMoves, DEPTH, 1 if gs.whiteToMove else -1)
+    if nextMove == None:
+        gs.checkMate = True
     return nextMove
 
 
@@ -109,7 +110,6 @@ def findMoveNegaMax(gs, validMoves, depth, turnMulitplier):
             maxScore = score
             if depth == DEPTH:
                 nextMove = move
-                print(maxScore)
         gs.undoMove()
     return maxScore
 
@@ -126,7 +126,7 @@ def findMoveAlphaBeta(gs, validMoves, depth, alpha, beta, turnMulitplier):
         return turnMulitplier * getScore(gs)
     maxScore = -CHECKMATE
     for move in validMoves:
-        gs.makeMove(move, calculate=True)
+        gs.makeMove(move, calculate=True, ai=True)
         nextMoves = gs.getValidMoves()
         score = -findMoveAlphaBeta(gs, nextMoves, depth - 1, -beta, -alpha, -turnMulitplier)
         if score > maxScore:
