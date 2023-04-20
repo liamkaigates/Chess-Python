@@ -4,6 +4,7 @@ Keeps track of moves throughout the game.
 """
 
 import pygame as p
+from multiprocessing import Process, Queue
 import ChessEngine
 import ChessAI
 
@@ -39,13 +40,16 @@ def main():
     playerOne = True # True == Human / False (0 - 2 for level) == Computer
     playerTwo = False
     resetSkip = False
+    AIthinking = False
+    moveFinderProcess = None
+    moveUndone = False
     while running:
         humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
             elif e.type == p.MOUSEBUTTONDOWN:
-                if not gameOver and humanTurn:
+                if not gameOver:
                     location = p.mouse.get_pos()
                     col = location[0] // SQ_SIZE
                     row = location[1] // SQ_SIZE
@@ -55,7 +59,7 @@ def main():
                     else:
                         sqSelected = (row, col)
                         playerClicks.append(sqSelected)
-                    if len(playerClicks) == 2:
+                    if len(playerClicks) == 2 and humanTurn:
                         move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
                         for i in range(len(validMoves)):
                             if move == validMoves[i]:
@@ -75,6 +79,10 @@ def main():
                         animate = False
                         resetSkip = True
                         validMoves = gs.getValidMoves()
+                        if AIthinking:
+                            moveFinderProcess.terminate()
+                            AIthinking = False
+                        moveUndone = True
                 if e.key == p.K_r and gameOver:
                     gs = ChessEngine.GameState()
                     validMoves = gs.getValidMoves()
@@ -84,12 +92,24 @@ def main():
                     animate = False
                     gameOver = False
                     resetSkip = True
-        if not gameOver and not humanTurn and not resetSkip:
-            gs.makeMove(ChessAI.findBestMoveAlphaBeta(gs, validMoves), ai=True)
-            moveMade = True
-            animate = True
-            sqSelected = ()
-            playerClicks = []
+                    if AIthinking:
+                            moveFinderProcess.terminate()
+                            AIthinking = False
+                    moveUndone = True
+        if not gameOver and not humanTurn and not resetSkip and not moveUndone:
+            if not AIthinking:
+                AIthinking = True
+                print("thinking...")
+                returnQueue = Queue()
+                moveFinderProcess = Process(target=ChessAI.findBestMoveAlphaBeta, args=(gs, validMoves, returnQueue))
+                moveFinderProcess.start()
+            if not moveFinderProcess.is_alive():
+                print("done thinking...")
+                move = returnQueue.get()
+                gs.makeMove(move,ai=True)
+                moveMade = True
+                animate = True
+                AIthinking = False
                     
         if moveMade:
             if animate:
@@ -97,6 +117,7 @@ def main():
             validMoves = gs.getValidMoves()
             moveMade = False
             animate = False
+            moveUndone = False
         drawGameState(screen, gs, validMoves, sqSelected, moveLogFont)
         if gs.checkMate:
             gameOver = True

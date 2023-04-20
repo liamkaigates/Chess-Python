@@ -1,9 +1,16 @@
 import random
 
 pieceScore = {"K": 0, "p": 1, "N": 3, "B": 3, "R": 5, "Q":9}
+knightScore = [[1,1,1,1,1,1,1,1],[1,2,2,2,2,2,2,1],[1,2,3,3,3,3,2,1,],[1,2,3,4,4,3,2,1],[1,2,3,4,4,3,2,1],[1,2,3,3,3,3,2,1,],[1,2,2,2,2,2,2,1],[1,1,1,1,1,1,1,1]]
+bishopScore = [[4,3,2,1,1,2,3,4],[3,4,3,2,2,3,4,3],[2,3,4,3,3,4,3,2],[1,2,3,4,4,3,2,1],[1,2,3,4,4,3,2,1],[2,3,4,3,3,4,3,2],[3,4,3,2,2,3,4,3],[4,3,2,1,1,2,3,4]]
+queenScore = [[1,1,1,3,1,1,1,1],[1,2,3,3,3,1,1,1],[1,4,3,3,3,4,2,1],[1,2,3,3,3,2,2,1],[1,2,3,3,3,2,2,1],[1,4,3,3,3,4,2,1],[1,1,2,3,3,1,1,1],[1,1,1,3,1,1,1,1]]
+rookScore = [[4,3,4,4,4,4,3,4],[4,4,4,4,4,4,4,4],[1,1,2,3,3,2,1,1],[1,2,3,4,4,3,2,1],[1,2,3,4,4,3,2,1],[1,1,2,2,2,2,1,1],[4,4,4,4,4,4,4,4],[4,3,4,4,4,4,3,4]]
+whitePawnScore = [[10,10,10,10,10,10,10,10],[8,8,8,8,8,8,8,8],[5,6,6,7,7,6,6,5],[2,3,3,5,5,3,3,2],[1,2,3,4,4,3,2,1],[1,1,2,3,3,2,1,1],[1,1,1,0,0,1,1,1],[0,0,0,0,0,0,0,0]]
+blackPawnScore = [[0,0,0,0,0,0,0,0],[1,1,1,0,0,1,1,1],[1,1,2,3,3,2,1,1],[1,2,3,4,4,3,2,1],[2,3,3,5,5,3,3,2],[5,6,6,7,7,6,6,5],[8,8,8,8,8,8,8,8],[10,10,10,10,10,10,10,10]]
+piecePositionScore = {"N": knightScore, "B": bishopScore, "Q": queenScore, "R": rookScore, "wp":whitePawnScore, "bp": blackPawnScore}
 CHECKMATE = 100
 STALEMATE = 0
-DEPTH = 2
+DEPTH = 4
 
 def findRandomMove(validMoves):
     if len(validMoves) >= 1:
@@ -113,12 +120,14 @@ def findMoveNegaMax(gs, validMoves, depth, turnMulitplier):
         gs.undoMove()
     return maxScore
 
-def findBestMoveAlphaBeta(gs, validMoves):
+def findBestMoveAlphaBeta(gs, validMoves, returnQueue):
     global nextMove
     nextMove = None
     random.shuffle(validMoves)
     findMoveAlphaBeta(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
-    return nextMove
+    if nextMove == None:
+        return validMoves[random.randint(0, len(validMoves) - 1)]
+    returnQueue.put(nextMove)
 
 def findMoveAlphaBeta(gs, validMoves, depth, alpha, beta, turnMulitplier):
     global nextMove
@@ -150,10 +159,18 @@ def getScore(gs):
     elif gs.staleMate or gs.insufficientMaterial or gs.threefoldRepition:
         return STALEMATE
     score = 0
-    for row in gs.board:
-        for sq in row:
-            if sq[0] == "w":
-                score += pieceScore[sq[1]]
-            elif sq[0] == "b":
-                score -= pieceScore[sq[1]]
+    for row in range(len(gs.board)):
+        for col in range(len(gs.board[row])):
+            sq = gs.board[row][col]
+            if sq != "--":
+                positionScore = 0
+                if sq[1] != "K":
+                    if sq[1] == "p":
+                        positionScore = piecePositionScore[sq][row][col]
+                    else:
+                        positionScore = piecePositionScore[sq[1]][row][col]
+                if gs.board[row][col][0] == "w":
+                    score += pieceScore[sq[1]] + positionScore
+                elif gs.board[row][col][0] == "b":
+                    score -= pieceScore[sq[1]] + positionScore
     return score

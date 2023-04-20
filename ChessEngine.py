@@ -276,14 +276,50 @@ class GameState():
                     if not piecePinned or pinDirection == (-1, -1):
                         moves.append(Move((r,c), (r-1, c - 1), self.board))
                 elif (r-1, c-1) == self.enpassantPossible:
-                    moves.append(Move((r, c), (r-1,c-1), self.board, isEnpassantMove=True))
+                    attackingPiece = False
+                    blockingPiece = False
+                    if self.whiteKingLocation[0] == r:
+                        if self.whiteKingLocation[1] < c:
+                            insideRange = range(self.blackKingLocation[1] + 1, c - 1)
+                            outsideRange = range(c + 1, 8)
+                        else:
+                            insideRange = range(self.blackKingLocation[1] - 1, c, -1)
+                            outsideRange = range(c + 2, -1, -1)
+                        for i in insideRange:
+                            if self.board[r][i] != "--":
+                                blockingPiece = True
+                        for i in outsideRange:
+                            if self.board[r][i][0] == "b" and (self.board[r][i][1] == "R" or self.board[r][i][1] == "Q"):
+                                attackingPiece = True
+                            elif self.board[r][i][0] == "w":
+                                blockingPiece = True
+                    if not attackingPiece or blockingPiece:
+                        moves.append(Move((r, c), (r-1,c-1), self.board, isEnpassantMove=True))
 
             if c + 1 <= 7:
                 if self.board[r - 1][c + 1][0] == "b":
                     if not piecePinned or pinDirection == (-1, 1):
                         moves.append(Move((r,c), (r-1, c + 1), self.board))
                 elif (r-1, c+1) == self.enpassantPossible:
-                    moves.append(Move((r, c), (r-1,c+1), self.board, isEnpassantMove=True))
+                    attackingPiece = False
+                    blockingPiece = False
+                    if self.whiteKingLocation[0] == r:
+                        if self.whiteKingLocation[1] < c:
+                            insideRange = range(self.blackKingLocation[1] + 1, c)
+                            outsideRange = range(c + 2, 8)
+                        else:
+                            insideRange = range(self.blackKingLocation[1] - 1, c + 1, -1)
+                            outsideRange = range(c - 1, -1, -1)
+                        for i in insideRange:
+                            if self.board[r][i] != "--":
+                                blockingPiece = True
+                        for i in outsideRange:
+                            if self.board[r][i][0] == "b" and (self.board[r][i][1] == "R" or self.board[r][i][1] == "Q"):
+                                attackingPiece = True
+                            elif self.board[r][i][0] == "w":
+                                blockingPiece = True
+                    if not attackingPiece or blockingPiece:
+                        moves.append(Move((r, c), (r-1,c+1), self.board, isEnpassantMove=True))
         else:
             if self.board[r+1][c] == "--":
                 if not piecePinned or pinDirection == (1, 0):
@@ -295,13 +331,49 @@ class GameState():
                     if not piecePinned or pinDirection == (1, -1):
                         moves.append(Move((r,c), (r+1, c - 1), self.board))
                 elif (r+1, c-1) == self.enpassantPossible:
-                    moves.append(Move((r, c), (r+1,c-1), self.board, isEnpassantMove=True))
+                    attackingPiece = False
+                    blockingPiece = False
+                    if self.blackKingLocation[0] == r:
+                        if self.blackKingLocation[1] < c:
+                            insideRange = range(self.blackKingLocation[1] + 1, c - 1)
+                            outsideRange = range(c + 1, 8)
+                        else:
+                            insideRange = range(self.blackKingLocation[1] - 1, c, -1)
+                            outsideRange = range(c + 2, -1, -1)
+                        for i in insideRange:
+                            if self.board[r][i] != "--":
+                                blockingPiece = True
+                        for i in outsideRange:
+                            if self.board[r][i][0] == "w" and (self.board[r][i][1] == "R" or self.board[r][i][1] == "Q"):
+                                attackingPiece = True
+                            elif self.board[r][i][0] == "b":
+                                blockingPiece = True
+                    if not attackingPiece or blockingPiece:
+                        moves.append(Move((r, c), (r+1,c-1), self.board, isEnpassantMove=True))
             if c + 1 <= 7:
                 if self.board[r + 1][c + 1][0] == "w":
                     if not piecePinned or pinDirection == (1, 1):
                         moves.append(Move((r,c), (r+1, c + 1), self.board))
                 elif (r+1, c+1) == self.enpassantPossible:
-                    moves.append(Move((r, c), (r+1,c+1), self.board, isEnpassantMove=True))
+                    attackingPiece = False
+                    blockingPiece = False
+                    if self.blackKingLocation[0] == r:
+                        if self.blackKingLocation[1] < c:
+                            insideRange = range(self.blackKingLocation[1] + 1, c)
+                            outsideRange = range(c + 2, 8)
+                        else:
+                            insideRange = range(self.blackKingLocation[1] - 1, c + 1, -1)
+                            outsideRange = range(c - 1, -1, -1)
+                        for i in insideRange:
+                            if self.board[r][i] != "--":
+                                blockingPiece = True
+                        for i in outsideRange:
+                            if self.board[r][i][0] == "w" and (self.board[r][i][1] == "R" or self.board[r][i][1] == "Q"):
+                                attackingPiece = True
+                            elif self.board[r][i][0] == "b":
+                                blockingPiece = True
+                    if not attackingPiece or blockingPiece:
+                        moves.append(Move((r, c), (r+1,c-1), self.board, isEnpassantMove=True))
 
 
     def getRookMoves(self, r, c, moves):
