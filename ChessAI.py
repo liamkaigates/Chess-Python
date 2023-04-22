@@ -131,14 +131,14 @@ def findBestMoveAlphaBeta(gs, validMoves, returnQueue):
     random.shuffle(validMoves)
     start_time = time.time()
     validMoves = sortMoves(gs, validMoves)
-    with open('scoreLog' + str(DEPTH) + '.json', 'r') as convert_file:
+    with open('scoreLog.json', 'r') as convert_file:
         scoreBoard = json.load(convert_file)
     findMoveAlphaBeta(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
     print(str(count) + " cycles")
     print("--- %s seconds ---" % (time.time() - start_time))
     if nextMove == None:
         return validMoves[random.randint(0, len(validMoves) - 1)]
-    with open('scoreLog' + str(DEPTH) + '.json', 'w') as convert_file:
+    with open('scoreLog.json', 'w') as convert_file:
         convert_file.write(json.dumps(scoreBoard))
     returnQueue.put(nextMove)
     
@@ -158,7 +158,8 @@ def findMoveAlphaBeta(gs, validMoves, depth, alpha, beta, turnMulitplier):
             if depth > 1:
                 nextMoves = sortMoves(gs, nextMoves)
             score = -findMoveAlphaBeta(gs, nextMoves, depth - 1, -beta, -alpha, -turnMulitplier)
-            scoreBoard[boardString] = score
+            if depth == DEPTH:
+                scoreBoard[boardString] = score
         if score > maxScore:
             maxScore = score
             if depth == DEPTH:

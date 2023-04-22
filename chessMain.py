@@ -7,6 +7,8 @@ import pygame as p
 from multiprocessing import Process, Queue
 import ChessEngine
 import ChessAI
+import json
+import time
 
 WIDTH = HEIGHT = 512
 MOVE_LOG_WIDTH = 256
@@ -34,10 +36,11 @@ def main():
     animate = False
     loadImages()
     running = True
+    start_time = 0
     sqSelected = ()
     playerClicks = []
     gameOver = False
-    playerOne = True # True == Human / False (0 - 2 for level) == Computer
+    playerOne = False # True == Human / False (0 - 2 for level) == Computer
     playerTwo = False
     resetSkip = False
     AIthinking = False
@@ -103,8 +106,6 @@ def main():
                         moveFinderProcess.terminate()
                         AIthinking = False
                         moveUndone = False
-                    with open('scoreLog' + str(DEPTH) + '.json', 'w') as convert_file:
-                        convert_file.write(json.dumps({}))
         if not gameOver and not humanTurn and not resetSkip and not moveUndone:
             if not AIthinking:
                 AIthinking = True
@@ -112,6 +113,7 @@ def main():
                 returnQueue = Queue()
                 moveFinderProcess = Process(target=ChessAI.findBestMoveAlphaBeta, args=(gs, validMoves, returnQueue))
                 moveFinderProcess.start()
+                start_time = time.time()
             if not moveFinderProcess.is_alive():
                 print("done thinking...")
                 res = returnQueue.get()
@@ -119,6 +121,12 @@ def main():
                 moveMade = True
                 animate = True
                 AIthinking = False
+                start_time = 0
+            if start_time != 0:
+                if time.time() - start_time >= 120:
+                    if AIthinking:
+                        moveFinderProcess.terminate()
+                        AIthinking = False
                     
         if moveMade:
             if animate:
