@@ -71,6 +71,9 @@ def main():
                                 playerClicks = []
                         if not moveMade:
                             playerClicks = [sqSelected]
+                    elif len(playerClicks) > 2:
+                        playerClicks = []
+                        sqSelected = ()
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_z:
                     if not gameOver:
@@ -78,6 +81,8 @@ def main():
                         moveMade = False
                         animate = False
                         resetSkip = True
+                        sqSelected = ()
+                        playerClicks = []
                         validMoves = gs.getValidMoves()
                         if AIthinking:
                             moveFinderProcess.terminate()
@@ -91,11 +96,15 @@ def main():
                     moveMade = False
                     animate = False
                     gameOver = False
-                    resetSkip = True
-                    if AIthinking:
-                            moveFinderProcess.terminate()
-                            AIthinking = False
+                    resetSkip = False
+                    gs.whiteToMove = True
                     moveUndone = True
+                    if AIthinking:
+                        moveFinderProcess.terminate()
+                        AIthinking = False
+                        moveUndone = False
+                    with open('scoreLog' + str(DEPTH) + '.json', 'w') as convert_file:
+                        convert_file.write(json.dumps({}))
         if not gameOver and not humanTurn and not resetSkip and not moveUndone:
             if not AIthinking:
                 AIthinking = True
@@ -105,8 +114,8 @@ def main():
                 moveFinderProcess.start()
             if not moveFinderProcess.is_alive():
                 print("done thinking...")
-                move = returnQueue.get()
-                gs.makeMove(move,ai=True)
+                res = returnQueue.get()
+                gs.makeMove(res,ai=True)
                 moveMade = True
                 animate = True
                 AIthinking = False

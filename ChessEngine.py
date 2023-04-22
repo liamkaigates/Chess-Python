@@ -46,7 +46,7 @@ class GameState():
             if ai:
                 idx = "q"
             else:
-                 idx = wait()
+                idx = wait()
             self.board[move.endRow][move.endCol] = move.pieceMoved[0] + move.promotionChoice[idx]
             move.promotedPiece = self.board[move.endRow][move.endCol]
             self.pieces.remove(move.pieceMoved)
@@ -268,6 +268,7 @@ class GameState():
         if self.whiteToMove:
             if self.board[r-1][c] == "--":
                 if not piecePinned or pinDirection == (-1, 0):
+                    move = Move((r,c), (r-1, c), self.board)
                     moves.append(Move((r,c), (r-1, c), self.board))
                     if r == 6 and self.board[r - 2][c] == "--":
                         moves.append(Move((r,c), (r-2, c), self.board))
