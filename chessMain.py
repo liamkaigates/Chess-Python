@@ -99,9 +99,8 @@ def main():
                     moveMade = False
                     animate = False
                     gameOver = False
-                    resetSkip = False
+                    resetSkip = True
                     gs.whiteToMove = True
-                    moveUndone = True
                     if AIthinking:
                         moveFinderProcess.terminate()
                         AIthinking = False
