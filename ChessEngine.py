@@ -12,7 +12,6 @@ class GameState():
         ["wp" for i in range(8)], ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
         self.pieces = ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR", "bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp", "wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp", "wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         self.whiteToMove = True
-        self.moveLog = []
         self.moveFunctions = {"p": self.getPawnMoves, "R":self.getRookMoves, "N": self.getKnightMoves,
                                 "B": self.getBishopMoves, "Q":self.getQueenMoves, "K":self.getKingMoves}
         self.whiteKingLocation = (7, 4)
@@ -20,6 +19,7 @@ class GameState():
         self.inCheck = False
         self.pins = []
         self.checks = []
+        self.moveLog = []
         self.boardLog = [copy.deepcopy(self.board)]
         self.checkMate = False
         self.staleMate = False

@@ -4,6 +4,7 @@ Keeps track of moves throughout the game.
 """
 
 import pygame as p
+import sys
 from multiprocessing import Process, Queue
 import ChessEngine
 import ChessAI
@@ -23,10 +24,78 @@ def loadImages():
     for piece in pieces:
         IMAGES[piece] = p.transform.scale(p.image.load("image/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
 
+def drawText(screen, text, font, text_col, x, y):
+    img = font.render(text, True, text_col)
+    screen.blit(img, (x,y))
+
+class Button():
+    def __init__(self, x, y, width, height, buttonText, isHuman, onePress=False):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.onePress = onePress
+        self.alreadyPressed = False
+        self.isHuman = isHuman
+        self.fillColors = {
+            'normal': '#ffffff',
+            'hover': '#666666',
+            'pressed': '#333333',
+        }
+        font = p.font.SysFont("Helvitca", 40, False, False)
+        self.buttonSurface = p.Surface((self.width, self.height))
+        self.buttonRect = p.Rect(self.x, self.y, self.width, self.height)
+        self.buttonSurf = font.render(buttonText, True, (20, 20, 20))
+
+    def process(self, screen):
+        mousePos = p.mouse.get_pos()
+        playerTwo = False
+        run = True
+        self.buttonSurface.fill(self.fillColors['normal'])
+        if self.buttonRect.collidepoint(mousePos):
+            self.buttonSurface.fill(self.fillColors['hover'])
+            if p.mouse.get_pressed(num_buttons=3)[0]:
+                self.buttonSurface.fill(self.fillColors['pressed'])
+                if self.onePress:
+                    playerTwo = self.isHuman
+                    run = False
+                elif not self.alreadyPressed:
+                    playerTwo = self.isHuman
+                    run = False
+                    self.alreadyPressed = True
+            else:
+                self.alreadyPressed = False
+        self.buttonSurface.blit(self.buttonSurf, [
+        self.buttonRect.width/2 - self.buttonSurf.get_rect().width/2,
+        self.buttonRect.height/2 - self.buttonSurf.get_rect().height/2
+        ])
+        screen.blit(self.buttonSurface, self.buttonRect)
+        return run, playerTwo
+
 
 def main():
     p.init()
+    playerOne = True # True == Human / False (0 - 2 for level) == Computer
+    playerTwo = False
     screen = p.display.set_mode((WIDTH + MOVE_LOG_WIDTH, HEIGHT))
+    p.display.set_caption("Main Menu")
+    run = True
+    running = True
+    font = p.font.SysFont("Helvitca", 40, False, False)
+    human = Button(2 * SQ_SIZE, 4 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "Human", True)
+    ai = Button(8 * SQ_SIZE, 4 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "AI", False)
+    while run:
+        screen.fill((139,136,120))
+        drawText(screen, "Welcome to Chess!", font, (255,255,255), SQ_SIZE * 4, SQ_SIZE)
+        drawText(screen, "Select your opponent!", font, (255,255,255), SQ_SIZE * 4 - SQ_SIZE // 2, 3 * SQ_SIZE // 2)
+        run, playerTwo = human.process(screen)
+        if playerTwo == False and run == True:
+            run, playerTwo = ai.process(screen)
+        for e in p.event.get():
+            if e.type == p.QUIT:
+                running = False
+                run = False
+        p.display.update()
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     gs = ChessEngine.GameState()
@@ -35,13 +104,10 @@ def main():
     moveMade = False
     animate = False
     loadImages()
-    running = True
     start_time = 0
     sqSelected = ()
     playerClicks = []
     gameOver = False
-    playerOne = False # True == Human / False (0 - 2 for level) == Computer
-    playerTwo = False
     resetSkip = False
     AIthinking = False
     moveFinderProcess = None
@@ -201,7 +267,6 @@ def drawPiece(screen, board):
             piece = board[r][c]
             if piece != "--":
                 screen.blit(IMAGES[piece], p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
 
 def drawMoveLog(screen, gs, moveLogFont):
     moveLogRect = p.Rect(WIDTH, 0, MOVE_LOG_WIDTH, MOVE_LOG_HEIGHT)
