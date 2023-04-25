@@ -29,7 +29,7 @@ def drawText(screen, text, font, text_col, x, y):
     screen.blit(img, (x,y))
 
 class Button():
-    def __init__(self, x, y, width, height, buttonText, isHuman, onePress=False):
+    def __init__(self, x, y, width, height, buttonText, isHuman, onePress=False, quitting=False):
         self.x = x
         self.y = y
         self.width = width
@@ -56,7 +56,10 @@ class Button():
             self.buttonSurface.fill(self.fillColors['hover'])
             if p.mouse.get_pressed(num_buttons=3)[0]:
                 self.buttonSurface.fill(self.fillColors['pressed'])
-                if self.onePress:
+                if self.onePress and quitting:
+                    run = False
+                    running = False
+                elif self.onePress:
                     playerTwo = self.isHuman
                     run = False
                 elif not self.alreadyPressed:
@@ -71,6 +74,31 @@ class Button():
         ])
         screen.blit(self.buttonSurface, self.buttonRect)
         return run, playerTwo
+    
+    def quitProcess(self, screen):
+        mousePos = p.mouse.get_pos()
+        running = True
+        run = True
+        self.buttonSurface.fill(self.fillColors['normal'])
+        if self.buttonRect.collidepoint(mousePos):
+            self.buttonSurface.fill(self.fillColors['hover'])
+            if p.mouse.get_pressed(num_buttons=3)[0]:
+                self.buttonSurface.fill(self.fillColors['pressed'])
+                if self.onePress:
+                    running = False
+                    run = False
+                elif not self.alreadyPressed:
+                    running = False
+                    run = False
+                    self.alreadyPressed = True
+            else:
+                self.alreadyPressed = False
+        self.buttonSurface.blit(self.buttonSurf, [
+        self.buttonRect.width/2 - self.buttonSurf.get_rect().width/2,
+        self.buttonRect.height/2 - self.buttonSurf.get_rect().height/2
+        ])
+        screen.blit(self.buttonSurface, self.buttonRect)
+        return run, running
 
 
 def main():
@@ -82,19 +110,22 @@ def main():
     run = True
     running = True
     font = p.font.SysFont("Helvitca", 40, False, False)
-    human = Button(2 * SQ_SIZE, 4 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "Human", True)
-    ai = Button(8 * SQ_SIZE, 4 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "AI", False)
+    human = Button(2 * SQ_SIZE, 3 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "Human", True)
+    ai = Button(8 * SQ_SIZE, 3 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "AI", False)
+    quitButton = Button(5 * SQ_SIZE, 6 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "Quit", False)
     while run:
         screen.fill((139,136,120))
         drawText(screen, "Welcome to Chess!", font, (255,255,255), SQ_SIZE * 4, SQ_SIZE)
         drawText(screen, "Select your opponent!", font, (255,255,255), SQ_SIZE * 4 - SQ_SIZE // 2, 3 * SQ_SIZE // 2)
-        run, playerTwo = human.process(screen)
-        if playerTwo == False and run == True:
-            run, playerTwo = ai.process(screen)
-        for e in p.event.get():
-            if e.type == p.QUIT:
-                running = False
-                run = False
+        run, running = quitButton.quitProcess(screen)
+        if run and running:
+            run, playerTwo = human.process(screen)
+            if playerTwo == False and run == True:
+                run, playerTwo = ai.process(screen)
+            for e in p.event.get():
+                if e.type == p.QUIT:
+                    running = False
+                    run = False
         p.display.update()
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
