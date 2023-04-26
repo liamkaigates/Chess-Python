@@ -68,14 +68,12 @@ class GameState():
                     self.board[move.endRow][move.endCol + 1] = self.board[move.endRow][move.endCol - 2]
                     self.board[move.endRow][move.endCol - 2] = "--"
             elif self.blackBool:
-                print(move.startCol - move.endCol)
                 if move.startCol - move.endCol == 2:
                     self.board[move.endRow][move.endCol + 1] = self.board[move.endRow][move.endCol - 1]
                     self.board[move.endRow][move.endCol - 1] = "--"
                 else:
                     self.board[move.endRow][move.endCol - 1] = self.board[move.endRow][move.endCol + 2]
                     self.board[move.endRow][move.endCol + 2] = "--"
-        print(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs)
 
         
         self.castleRightsLog.append(CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs))

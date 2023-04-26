@@ -4,7 +4,6 @@ Keeps track of moves throughout the game.
 """
 
 import pygame as p
-import sys
 from multiprocessing import Process, Queue
 import ChessEngine
 import ChessAI
@@ -143,8 +142,6 @@ class Button():
 
 def main():
     p.init()
-    playerOne = True # True == Human / False (0 - 2 for level) == Computer
-    playerTwo = False
     playerOne = True # True == Human / False (0 - 2 for level) == Computer
     playerTwo = False
     screen = p.display.set_mode((WIDTH + MOVE_LOG_WIDTH, HEIGHT))
