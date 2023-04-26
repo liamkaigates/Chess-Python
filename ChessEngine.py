@@ -12,14 +12,16 @@ class GameState():
         ["wp" for i in range(8)], ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
         self.pieces = ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR", "bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp", "wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp", "wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         self.whiteToMove = True
-        self.moveLog = []
         self.moveFunctions = {"p": self.getPawnMoves, "R":self.getRookMoves, "N": self.getKnightMoves,
                                 "B": self.getBishopMoves, "Q":self.getQueenMoves, "K":self.getKingMoves}
         self.whiteKingLocation = (7, 4)
         self.blackKingLocation= (0,4)
         self.inCheck = False
+        self.whiteBool = False
+        self.blackBool = False
         self.pins = []
         self.checks = []
+        self.moveLog = []
         self.boardLog = [copy.deepcopy(self.board)]
         self.checkMate = False
         self.staleMate = False
@@ -58,12 +60,22 @@ class GameState():
         else:
             self.enpassantPossible = ()
         if move.isCastleMove:
-            if move.endCol - move.startCol == 2:
-                self.board[move.endRow][move.endCol - 1] = self.board[move.endRow][move.endCol + 1]
-                self.board[move.endRow][move.endCol + 1] = "--"
-            else:
-                self.board[move.endRow][move.endCol + 1] = self.board[move.endRow][move.endCol - 2]
-                self.board[move.endRow][move.endCol - 2] = "--"
+            if self.whiteBool:
+                if move.endCol - move.startCol == 2:
+                    self.board[move.endRow][move.endCol - 1] = self.board[move.endRow][move.endCol + 1]
+                    self.board[move.endRow][move.endCol + 1] = "--"
+                else:
+                    self.board[move.endRow][move.endCol + 1] = self.board[move.endRow][move.endCol - 2]
+                    self.board[move.endRow][move.endCol - 2] = "--"
+            elif self.blackBool:
+                print(move.startCol - move.endCol)
+                if move.startCol - move.endCol == 2:
+                    self.board[move.endRow][move.endCol + 1] = self.board[move.endRow][move.endCol - 1]
+                    self.board[move.endRow][move.endCol - 1] = "--"
+                else:
+                    self.board[move.endRow][move.endCol - 1] = self.board[move.endRow][move.endCol + 2]
+                    self.board[move.endRow][move.endCol + 2] = "--"
+        print(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs)
 
         
         self.castleRightsLog.append(CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks, self.currentCastlingRights.wqs, self.currentCastlingRights.bqs))
@@ -102,12 +114,20 @@ class GameState():
                 self.board[move.startRow][move.endCol] = move.pieceCaptured
                 self.enpassantPossible = (move.endRow, move.endCol)
             if move.isCastleMove:
-                if move.endCol - move.startCol == 2:
-                    self.board[move.endRow][move.endCol + 1] = self.board[move.endRow][move.endCol - 1]
-                    self.board[move.endRow][move.endCol - 1] = "--"
-                else:
-                    self.board[move.endRow][move.endCol - 2] = self.board[move.endRow][move.endCol + 1]
-                    self.board[move.endRow][move.endCol + 1] = "--"
+                if self.whiteBool:
+                    if move.endCol - move.startCol == 2:
+                        self.board[move.endRow][move.endCol + 1] = self.board[move.endRow][move.endCol - 1]
+                        self.board[move.endRow][move.endCol - 1] = "--"
+                    else:
+                        self.board[move.endRow][move.endCol - 2] = self.board[move.endRow][move.endCol + 1]
+                        self.board[move.endRow][move.endCol + 1] = "--"
+                elif self.blackBool:
+                    if move.startCol - move.endCol == 2:
+                        self.board[move.endRow][move.endCol - 1] = self.board[move.endRow][move.endCol + 1]
+                        self.board[move.endRow][move.endCol + 1] = "--"
+                    else:
+                        self.board[move.endRow][move.endCol + 2] = self.board[move.endRow][move.endCol - 1]
+                        self.board[move.endRow][move.endCol - 1] = "--"
             self.castleRightsLog.pop()
             self.currentCastlingRights = self.castleRightsLog[-1]
             self.enpassantLog.pop()
@@ -495,14 +515,25 @@ class GameState():
             self.getQueenSideCastleMoves(r, c, moves)
     
     def getKingSideCastleMoves(self, r, c, moves):
-        if self.board[r][c+1] == "--" and self.board[r][c+2] == "--":
-            if not self.squareUnderAttack(r, c+1) and not self.squareUnderAttack(r, c+2):
-                moves.append(Move((r,c), (r,c+2), self.board, isCastleMove=True))
+        if self.whiteBool:
+            if self.board[r][c+1] == "--" and self.board[r][c+2] == "--":
+                if not self.squareUnderAttack(r, c+1) and not self.squareUnderAttack(r, c+2):
+                    moves.append(Move((r,c), (r,c+2), self.board, isCastleMove=True))
+        if self.blackBool:
+            if self.board[r][c-1] == "--" and self.board[r][c-2] == "--":
+                if not self.squareUnderAttack(r, c-1) and not self.squareUnderAttack(r, c-2):
+                    moves.append(Move((r,c), (r,c-2), self.board, isCastleMove=True))
+
 
     def getQueenSideCastleMoves(self, r, c, moves):
-        if self.board[r][c-1] == "--" and self.board[r][c-2] == "--" and self.board[r][c-3] == "--":
-            if not self.squareUnderAttack(r, c-1) and not self.squareUnderAttack(r, c-2):
-                moves.append(Move((r,c), (r,c-2), self.board, isCastleMove=True))
+        if self.whiteBool:
+            if self.board[r][c-1] == "--" and self.board[r][c-2] == "--" and self.board[r][c-3] == "--":
+                if not self.squareUnderAttack(r, c-1) and not self.squareUnderAttack(r, c-2):
+                    moves.append(Move((r,c), (r,c-2), self.board, isCastleMove=True))
+        if self.blackBool:
+            if self.board[r][c+1] == "--" and self.board[r][c+2] == "--" and self.board[r][c+3] == "--":
+                if not self.squareUnderAttack(r, c+1) and not self.squareUnderAttack(r, c+2):
+                    moves.append(Move((r,c), (r,c+2), self.board, isCastleMove=True))
             
 
 class CastleRights():

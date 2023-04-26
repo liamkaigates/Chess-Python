@@ -23,25 +23,191 @@ def loadImages():
     for piece in pieces:
         IMAGES[piece] = p.transform.scale(p.image.load("image/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
 
+def flipImages():
+    pieces = ["wp", "wR", "wN", "wB", "wQ", "wK", "bp", "bN", "bB", "bR", "bQ", "bK"]
+    for i in range(len(pieces)):
+        piece = pieces[i]
+        if piece[0] == "w":
+            piece = "b" + pieces[i][1]
+        else:
+            piece = "w" + pieces[i][1]
+        IMAGES[piece] = p.transform.scale(p.image.load("image/" + pieces[i] + ".png"), (SQ_SIZE, SQ_SIZE))
+
+def reverseBoard(board):
+    board[0][3], board[0][4] = board[0][4], board[0][3]
+    board[7][3], board[7][4] = board[7][4], board[7][3]
+    return board
+
+def drawText(screen, text, font, text_col, x, y):
+    img = font.render(text, True, text_col)
+    screen.blit(img, (x,y))
+
+class Button():
+    def __init__(self, x, y, width, height, buttonText, isHuman, onePress=False, quitting=False):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.onePress = onePress
+        self.alreadyPressed = False
+        self.isHuman = isHuman
+        self.fillColors = {
+            'normal': '#ffffff',
+            'hover': '#666666',
+            'pressed': '#333333',
+        }
+        font = p.font.SysFont("Helvitca", 40, False, False)
+        self.buttonSurface = p.Surface((self.width, self.height))
+        self.buttonRect = p.Rect(self.x, self.y, self.width, self.height)
+        self.buttonSurf = font.render(buttonText, True, (20, 20, 20))
+
+    def process(self, screen):
+        mousePos = p.mouse.get_pos()
+        playerTwo = False
+        run = True
+        self.buttonSurface.fill(self.fillColors['normal'])
+        if self.buttonRect.collidepoint(mousePos):
+            self.buttonSurface.fill(self.fillColors['hover'])
+            if p.mouse.get_pressed(num_buttons=3)[0]:
+                self.buttonSurface.fill(self.fillColors['pressed'])
+                if self.onePress and quitting:
+                    run = False
+                    running = False
+                elif self.onePress:
+                    playerTwo = self.isHuman
+                    run = False
+                elif not self.alreadyPressed:
+                    playerTwo = self.isHuman
+                    run = False
+                    self.alreadyPressed = True
+            else:
+                self.alreadyPressed = False
+        self.buttonSurface.blit(self.buttonSurf, [
+        self.buttonRect.width/2 - self.buttonSurf.get_rect().width/2,
+        self.buttonRect.height/2 - self.buttonSurf.get_rect().height/2
+        ])
+        screen.blit(self.buttonSurface, self.buttonRect)
+        return run, playerTwo
+    
+    def quitProcess(self, screen):
+        mousePos = p.mouse.get_pos()
+        running = True
+        run = True
+        self.buttonSurface.fill(self.fillColors['normal'])
+        if self.buttonRect.collidepoint(mousePos):
+            self.buttonSurface.fill(self.fillColors['hover'])
+            if p.mouse.get_pressed(num_buttons=3)[0]:
+                self.buttonSurface.fill(self.fillColors['pressed'])
+                if self.onePress:
+                    running = False
+                    run = False
+                elif not self.alreadyPressed:
+                    running = False
+                    run = False
+                    self.alreadyPressed = True
+            else:
+                self.alreadyPressed = False
+        self.buttonSurface.blit(self.buttonSurf, [
+        self.buttonRect.width/2 - self.buttonSurf.get_rect().width/2,
+        self.buttonRect.height/2 - self.buttonSurf.get_rect().height/2
+        ])
+        screen.blit(self.buttonSurface, self.buttonRect)
+        return run, running
+    
+    def chooseColor(self, screen):
+        mousePos = p.mouse.get_pos()
+        color = False
+        run = True
+        self.buttonSurface.fill(self.fillColors['normal'])
+        if self.buttonRect.collidepoint(mousePos):
+            self.buttonSurface.fill(self.fillColors['hover'])
+            if p.mouse.get_pressed(num_buttons=3)[0]:
+                self.buttonSurface.fill(self.fillColors['pressed'])
+                if self.onePress:
+                    color = True
+                    run = False
+                elif not self.alreadyPressed:
+                    color = True
+                    run = False
+                    self.alreadyPressed = True
+            else:
+                self.alreadyPressed = False
+        self.buttonSurface.blit(self.buttonSurf, [
+        self.buttonRect.width/2 - self.buttonSurf.get_rect().width/2,
+        self.buttonRect.height/2 - self.buttonSurf.get_rect().height/2
+        ])
+        screen.blit(self.buttonSurface, self.buttonRect)
+        return run, color
+
 
 def main():
     p.init()
+    playerOne = True # True == Human / False (0 - 2 for level) == Computer
+    playerTwo = False
     screen = p.display.set_mode((WIDTH + MOVE_LOG_WIDTH, HEIGHT))
+    p.display.set_caption("Main Menu")
+    run = True
+    running = True
+    font = p.font.SysFont("Helvitca", 40, False, False)
+    human = Button(2 * SQ_SIZE, 3 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "Human", True)
+    ai = Button(8 * SQ_SIZE, 3 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "AI", False)
+    quitButton = Button(5 * SQ_SIZE, 6 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "Quit", False)
+    while run:
+        screen.fill((139,136,120))
+        drawText(screen, "Welcome to Chess!", font, (255,255,255), SQ_SIZE * 4, SQ_SIZE)
+        drawText(screen, "Select your opponent!", font, (255,255,255), SQ_SIZE * 4 - SQ_SIZE // 2, 3 * SQ_SIZE // 2)
+        run, running = quitButton.quitProcess(screen)
+        if run and running:
+            run, playerTwo = human.process(screen)
+            if playerTwo == False and run == True:
+                run, playerTwo = ai.process(screen)
+        for e in p.event.get():
+            if e.type == p.QUIT:
+                running = False
+                run = False
+        p.display.update()
+    run = True
+    white = Button(2 * SQ_SIZE, 3 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "White", False)
+    black = Button(8 * SQ_SIZE, 3 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "Black", False)
+    whiteBool = False
+    blackBool = False
+    time.sleep(0.25)
+    p.event.clear()
+    while run:
+        screen.fill((139,136,120))
+        drawText(screen, "Welcome to Chess!", font, (255,255,255), SQ_SIZE * 4, SQ_SIZE)
+        drawText(screen, "Select your color!", font, (255,255,255), SQ_SIZE * 4, 3 * SQ_SIZE // 2)
+        run, running = quitButton.quitProcess(screen)
+        if run and running:
+            run, whiteBool = white.chooseColor(screen)
+            if whiteBool == False and run == True:
+                run, blackBool = black.chooseColor(screen)
+        for e in p.event.get():
+            if e.type == p.QUIT:
+                running = False
+                run = False
+        p.display.update()
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     gs = ChessEngine.GameState()
+    if blackBool and not whiteBool:
+        gs.blackBool = True
+        gs.whiteToMove = not gs.whiteToMove
+        gs.board = reverseBoard(gs.board)
+    else:
+        gs.whiteBool  = True
     validMoves = gs.getValidMoves()
     moveLogFont = p.font.SysFont("Helvitca", 20, False, False)
     moveMade = False
     animate = False
-    loadImages()
-    running = True
+    if blackBool and not whiteBool:
+        flipImages()
+    else:
+        loadImages()
     start_time = 0
     sqSelected = ()
     playerClicks = []
     gameOver = False
-    playerOne = False # True == Human / False (0 - 2 for level) == Computer
-    playerTwo = False
     resetSkip = False
     AIthinking = False
     moveFinderProcess = None
@@ -93,15 +259,21 @@ def main():
                         moveUndone = True
                 if e.key == p.K_r and gameOver:
                     gs = ChessEngine.GameState()
+                    if blackBool and not whiteBool:
+                        gs.whiteToMove = not gs.whiteToMove
+                        gs.board = reverseBoard(gs.board)
+                    if blackBool and not whiteBool:
+                        flipImages()
+                    else:
+                        loadImages()
                     validMoves = gs.getValidMoves()
                     sqSelected = ()
                     playerClicks = []
                     moveMade = False
                     animate = False
                     gameOver = False
-                    resetSkip = False
+                    resetSkip = True
                     gs.whiteToMove = True
-                    moveUndone = True
                     if AIthinking:
                         moveFinderProcess.terminate()
                         AIthinking = False
@@ -202,7 +374,6 @@ def drawPiece(screen, board):
             piece = board[r][c]
             if piece != "--":
                 screen.blit(IMAGES[piece], p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
 
 def drawMoveLog(screen, gs, moveLogFont):
     moveLogRect = p.Rect(WIDTH, 0, MOVE_LOG_WIDTH, MOVE_LOG_HEIGHT)

@@ -134,6 +134,7 @@ def findBestMoveAlphaBeta(gs, validMoves, returnQueue):
     with open('scoreLog.json', 'r') as convert_file:
         scoreBoard = json.load(convert_file)
     findMoveAlphaBeta(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+    print(len(scoreBoard))
     print(str(count) + " cycles")
     print("--- %s seconds ---" % (time.time() - start_time))
     if nextMove == None:
@@ -151,15 +152,14 @@ def findMoveAlphaBeta(gs, validMoves, depth, alpha, beta, turnMulitplier):
     for move in validMoves:
         gs.makeMove(move, calculate=True, ai=True)
         boardString = ''.join(str(item) for innerlist in gs.board for item in innerlist)
-        if boardString in scoreBoard:
-            score = scoreBoard[boardString]
+        if boardString in scoreBoard and scoreBoard[boardString][1] > depth:
+                score = scoreBoard[boardString][0]
         else:
             nextMoves = gs.getValidMoves()
             if depth > 1:
                 nextMoves = sortMoves(gs, nextMoves)
             score = -findMoveAlphaBeta(gs, nextMoves, depth - 1, -beta, -alpha, -turnMulitplier)
-            if depth == DEPTH:
-                scoreBoard[boardString] = score
+            scoreBoard[boardString] = [score, depth]
         if score > maxScore:
             maxScore = score
             if depth == DEPTH:
