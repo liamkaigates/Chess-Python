@@ -217,6 +217,8 @@ def main():
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
+                with open('scoreLog.json', 'w') as convert_file:
+                    convert_file.write(json.dumps({}))
             elif e.type == p.MOUSEBUTTONDOWN:
                 if not gameOver:
                     location = p.mouse.get_pos()
