@@ -5,6 +5,7 @@ Keeps track of moves throughout the game.
 
 import pygame as p
 import sys
+import sys
 from multiprocessing import Process, Queue
 import ChessEngine
 import ChessAI
