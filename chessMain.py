@@ -17,6 +17,7 @@ DIMENSION = 8
 SQ_SIZE = HEIGHT // DIMENSION
 MAX_FPS = 15
 IMAGES = {}
+COLORS = [p.Color(205,51,51), p.Color(255,127,36), p.Color(255,193,37), p.Color(110,139,61), p.Color(24,116,205), p.Color(159,121,238)]
 
 def loadImages():
     pieces = ["wp", "wR", "wN", "wB", "wQ", "wK", "bp", "bN", "bB", "bR", "bQ", "bK"]
@@ -114,7 +115,32 @@ class Button():
         screen.blit(self.buttonSurface, self.buttonRect)
         return run, running
     
-    def chooseColor(self, screen):
+    def choosePiece(self, screen):
+        mousePos = p.mouse.get_pos()
+        color = False
+        run = True
+        self.buttonSurface.fill(self.fillColors['normal'])
+        if self.buttonRect.collidepoint(mousePos):
+            self.buttonSurface.fill(self.fillColors['hover'])
+            if p.mouse.get_pressed(num_buttons=3)[0]:
+                self.buttonSurface.fill(self.fillColors['pressed'])
+                if self.onePress:
+                    color = True
+                    run = False
+                elif not self.alreadyPressed:
+                    color = True
+                    run = False
+                    self.alreadyPressed = True
+            else:
+                self.alreadyPressed = False
+        self.buttonSurface.blit(self.buttonSurf, [
+        self.buttonRect.width/2 - self.buttonSurf.get_rect().width/2,
+        self.buttonRect.height/2 - self.buttonSurf.get_rect().height/2
+        ])
+        screen.blit(self.buttonSurface, self.buttonRect)
+        return run, color
+    
+    def boardColor(self, screen):
         mousePos = p.mouse.get_pos()
         color = False
         run = True
@@ -139,7 +165,6 @@ class Button():
         screen.blit(self.buttonSurface, self.buttonRect)
         return run, color
 
-
 def main():
     p.init()
     playerOne = True # True == Human / False (0 - 2 for level) == Computer
@@ -151,7 +176,7 @@ def main():
     font = p.font.SysFont("Helvitca", 40, False, False)
     human = Button(2 * SQ_SIZE, 3 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "Human", True)
     ai = Button(8 * SQ_SIZE, 3 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "AI", False)
-    quitButton = Button(5 * SQ_SIZE, 6 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "Quit", False)
+    quitButton = Button(5 * SQ_SIZE, 6.5 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE, "Quit", False)
     while run:
         screen.fill((139,136,120))
         drawText(screen, "Welcome to Chess!", font, (255,255,255), SQ_SIZE * 4, SQ_SIZE)
@@ -176,17 +201,48 @@ def main():
     while run:
         screen.fill((139,136,120))
         drawText(screen, "Welcome to Chess!", font, (255,255,255), SQ_SIZE * 4, SQ_SIZE)
-        drawText(screen, "Select your color!", font, (255,255,255), SQ_SIZE * 4, 3 * SQ_SIZE // 2)
+        drawText(screen, "Select your piece color!", font, (255,255,255), SQ_SIZE * 4 - SQ_SIZE//2, 3 * SQ_SIZE // 2)
         run, running = quitButton.quitProcess(screen)
         if run and running:
-            run, whiteBool = white.chooseColor(screen)
+            run, whiteBool = white.choosePiece(screen)
             if whiteBool == False and run == True:
-                run, blackBool = black.chooseColor(screen)
+                run, blackBool = black.choosePiece(screen)
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
                 run = False
         p.display.update()
+    run = True
+    time.sleep(0.25)
+    p.event.clear()
+    red = orange = yellow = green = blue = purple = False
+    redButton = Button(SQ_SIZE * 1, SQ_SIZE * 3, SQ_SIZE * 2, SQ_SIZE, "Red", False)
+    orangeButton = Button(SQ_SIZE * 5, SQ_SIZE * 3, SQ_SIZE * 2, SQ_SIZE, "Orange", False)
+    yellowButton = Button(SQ_SIZE * 9, SQ_SIZE * 3, SQ_SIZE * 2, SQ_SIZE, "Yellow", False)
+    greenButton = Button(SQ_SIZE * 1, SQ_SIZE * 5, SQ_SIZE * 2, SQ_SIZE, "Green", False)
+    blueButton = Button(SQ_SIZE * 5, SQ_SIZE * 5, SQ_SIZE * 2, SQ_SIZE, "Blue", False)
+    purpleButton = Button(SQ_SIZE * 9, SQ_SIZE * 5, SQ_SIZE * 2, SQ_SIZE, "Purple", False)
+    colorButtons = [redButton, orangeButton, yellowButton, greenButton, blueButton, purpleButton]
+    colors = [red, orange, yellow, green, blue, purple]
+    while run:
+        screen.fill((139,136,120))
+        drawText(screen, "Welcome to Chess!", font, (255,255,255), SQ_SIZE * 4, SQ_SIZE)
+        drawText(screen, "Select your board color!", font, (255,255,255), SQ_SIZE * 4 - SQ_SIZE//2, 3 * SQ_SIZE // 2)
+        run, running = quitButton.quitProcess(screen)
+        for i in range(len(colors)):
+            if run and running:
+                run, colors[i] = colorButtons[i].boardColor(screen)
+                if colors[i] and not run:
+                    break
+        for e in p.event.get():
+            if e.type == p.QUIT:
+                running = False
+                run = False
+        p.display.update()
+    boardColor = p.Color(110,139,61)
+    for i in range(len(colors)):
+        if colors[i]:
+            boardColor = COLORS[i]
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     gs = ChessEngine.GameState()
@@ -304,12 +360,12 @@ def main():
                     
         if moveMade:
             if animate:
-                animateMove(gs.moveLog[-1], screen, gs.board, clock)
+                animateMove(gs.moveLog[-1], screen, gs.board, clock, boardColor)
             validMoves = gs.getValidMoves()
             moveMade = False
             animate = False
             moveUndone = False
-        drawGameState(screen, gs, validMoves, sqSelected, moveLogFont)
+        drawGameState(screen, gs, validMoves, sqSelected, moveLogFont, boardColor)
         if gs.checkMate:
             gameOver = True
             text = "Black wins by checkmate!" if gs.whiteToMove else "White wins by checkmate!"
@@ -354,16 +410,16 @@ def highlightEndSquares(screen, gs, validMoves, sqSelected):
                 if move.startRow == r and move.startCol == c:
                     screen.blit(circle, (SQ_SIZE*move.endCol, SQ_SIZE*move.endRow))
 
-def drawGameState(screen, gs, validMoves, sqSelected, moveLogFont):
-    drawBoard(screen)
+def drawGameState(screen, gs, validMoves, sqSelected, moveLogFont, boardColor):
+    drawBoard(screen, boardColor)
     highlightStartSquares(screen, gs, validMoves, sqSelected)
     drawPiece(screen, gs.board)
     highlightEndSquares(screen, gs, validMoves, sqSelected)
     drawMoveLog(screen, gs, moveLogFont)
 
 
-def drawBoard(screen):
-    colors = [p.Color(255,248,220), p.Color(110,139,61)]
+def drawBoard(screen, boardColor):
+    colors = [p.Color(255,248,220), boardColor]
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             color = colors[((r+c) % 2)]
@@ -401,7 +457,7 @@ def drawMoveLog(screen, gs, moveLogFont):
         screen.blit(textObj, textLocation)
         y += textObj.get_height() + space
 
-def animateMove(move, screen, board, clock):
+def animateMove(move, screen, board, clock, boardColor):
     colors = [p.Color(255,248,220), p.Color(110,139,61)]
     coords = []
     dR = move.endRow - move.startRow
@@ -410,7 +466,7 @@ def animateMove(move, screen, board, clock):
     frameCount = (abs(dR) + abs(dC)) * framesPerSquare
     for frame in range(frameCount + 1):
         r, c = (move.startRow + dR * frame/frameCount, move.startCol + dC * frame/frameCount)
-        drawBoard(screen)
+        drawBoard(screen, boardColor)
         drawPiece(screen, board)
         color = colors[(move.endRow + move.endCol) % 2]
         endSquare = p.Rect(SQ_SIZE * move.endCol, move.endRow * SQ_SIZE, SQ_SIZE, SQ_SIZE)
