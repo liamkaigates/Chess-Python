@@ -14,7 +14,7 @@ blackPawnScore = [[0,0,0,0,0,0,0,0],[1,1,1,0,0,1,1,1],[1,1,2,3,3,2,1,1],[1,2,3,4
 piecePositionScore = {"N": knightScore, "B": bishopScore, "Q": queenScore, "R": rookScore, "wp":whitePawnScore, "bp": blackPawnScore}
 CHECKMATE = 100
 STALEMATE = 0
-DEPTH = 4
+DEPTH = 1
 
 def findRandomMove(validMoves):
     if len(validMoves) >= 1:

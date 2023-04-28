@@ -164,6 +164,32 @@ class Button():
         ])
         screen.blit(self.buttonSurface, self.buttonRect)
         return run, color
+    
+    def menuProcess(self, screen):
+        mousePos = p.mouse.get_pos()
+        menu = False
+        run = True
+        self.buttonSurface.fill(self.fillColors['normal'])
+        if self.buttonRect.collidepoint(mousePos):
+            self.buttonSurface.fill(self.fillColors['hover'])
+            if p.mouse.get_pressed(num_buttons=3)[0]:
+                self.buttonSurface.fill(self.fillColors['pressed'])
+                if self.onePress:
+                    menu = True
+                    run = False
+                elif not self.alreadyPressed:
+                    menu = True
+                    run = False
+                    self.alreadyPressed = True
+            else:
+                self.alreadyPressed = False
+        self.buttonSurface.blit(self.buttonSurf, [
+        self.buttonRect.width/2 - self.buttonSurf.get_rect().width/2,
+        self.buttonRect.height/2 - self.buttonSurf.get_rect().height/2
+        ])
+        screen.blit(self.buttonSurface, self.buttonRect)
+        return run, menu
+
 
 def main():
     p.init()
@@ -186,10 +212,13 @@ def main():
             run, playerTwo = human.process(screen)
             if playerTwo == False and run == True:
                 run, playerTwo = ai.process(screen)
+        else:
+            return
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
                 run = False
+                return
         p.display.update()
     run = True
     white = Button(2 * SQ_SIZE, 3 * SQ_SIZE, SQ_SIZE * 2, SQ_SIZE * 2, "White", False)
@@ -207,10 +236,13 @@ def main():
             run, whiteBool = white.choosePiece(screen)
             if whiteBool == False and run == True:
                 run, blackBool = black.choosePiece(screen)
+        else:
+            return
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
                 run = False
+                return
         p.display.update()
     run = True
     time.sleep(0.25)
@@ -233,12 +265,15 @@ def main():
             if run and running:
                 run, colors[i] = colorButtons[i].boardColor(screen)
                 if colors[i] and not run:
+                    print("Pressed")
                     break
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
                 run = False
         p.display.update()
+    time.sleep(0.25)
+    p.event.clear()
     boardColor = p.Color(110,139,61)
     for i in range(len(colors)):
         if colors[i]:
@@ -268,6 +303,8 @@ def main():
     AIthinking = False
     moveFinderProcess = None
     moveUndone = False
+    menuButton = Button(SQ_SIZE * 8.5, SQ_SIZE * 5, SQ_SIZE * 3, SQ_SIZE, "Back to Menu", False)
+    quitButton = Button(SQ_SIZE * 9, SQ_SIZE * 7, SQ_SIZE * 2, SQ_SIZE, "Quit", False)
     while running:
         humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
         for e in p.event.get():
@@ -366,6 +403,15 @@ def main():
             animate = False
             moveUndone = False
         drawGameState(screen, gs, validMoves, sqSelected, moveLogFont, boardColor)
+        running, goToMenu = menuButton.menuProcess(screen)
+        running, quitting = quitButton.quitProcess(screen)
+        if goToMenu:
+            time.sleep(0.25)
+            p.event.clear()
+            main()
+            return
+        elif not quitting:
+            running = False
         if gs.checkMate:
             gameOver = True
             text = "Black wins by checkmate!" if gs.whiteToMove else "White wins by checkmate!"
@@ -438,7 +484,10 @@ def drawMoveLog(screen, gs, moveLogFont):
     p.draw.rect(screen, p.Color("black"), moveLogRect)
     moveLog = gs.moveLog
     moveTexts = []
-    for i in range(0, len(moveLog), 2):
+    start = 0
+    if len(moveLog) > 114:
+        start = len(moveLog) - 114
+    for i in range(start, len(moveLog), 2):
         moveString = str(i//2 + 1) + ". " + moveLog[i].__str__(gs) + " "
         if i + 1 < len(moveLog):
             moveString += moveLog[i+1].__str__(gs) + " "

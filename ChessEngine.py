@@ -51,6 +51,8 @@ class GameState():
                 idx = wait()
             self.board[move.endRow][move.endCol] = move.pieceMoved[0] + move.promotionChoice[idx]
             move.promotedPiece = self.board[move.endRow][move.endCol]
+            print(self.pieces)
+            print(move.pieceMoved)
             self.pieces.remove(move.pieceMoved)
             self.pieces.append(move.pieceMoved[0] + move.promotionChoice[idx])
         if move.isEnpassantMove:
@@ -333,6 +335,7 @@ class GameState():
                             if self.board[r][i] != "--":
                                 blockingPiece = True
                         for i in outsideRange:
+                            print(outsideRange)
                             if self.board[r][i][0] == "b" and (self.board[r][i][1] == "R" or self.board[r][i][1] == "Q"):
                                 attackingPiece = True
                             elif self.board[r][i][0] == "w":
