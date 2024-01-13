@@ -66,12 +66,13 @@ class Button():
         mousePos = p.mouse.get_pos()
         playerTwo = False
         run = True
+        running = True
         self.buttonSurface.fill(self.fillColors['normal'])
         if self.buttonRect.collidepoint(mousePos):
             self.buttonSurface.fill(self.fillColors['hover'])
             if p.mouse.get_pressed(num_buttons=3)[0]:
                 self.buttonSurface.fill(self.fillColors['pressed'])
-                if self.onePress and quitting:
+                if self.onePress and running:
                     run = False
                     running = False
                 elif self.onePress:
@@ -265,7 +266,6 @@ def main():
             if run and running:
                 run, colors[i] = colorButtons[i].boardColor(screen)
                 if colors[i] and not run:
-                    print("Pressed")
                     break
         for e in p.event.get():
             if e.type == p.QUIT:
@@ -378,7 +378,7 @@ def main():
                 AIthinking = True
                 print("thinking...")
                 returnQueue = Queue()
-                moveFinderProcess = Process(target=ChessAI.findBestMoveAlphaBeta, args=(gs, validMoves, returnQueue))
+                moveFinderProcess = Process(target=ChessAI.findBestMove, args=(gs, validMoves, returnQueue))
                 moveFinderProcess.start()
                 start_time = time.time()
             if not moveFinderProcess.is_alive():

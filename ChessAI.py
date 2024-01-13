@@ -1,8 +1,6 @@
 import random
 import time
-import sys
-import json
-from multiprocessing import Process, Queue
+from multiprocessing import Queue
 
 pieceScore = {"K": 0, "p": 1, "N": 3, "B": 3, "R": 5, "Q":9}
 knightScore = [[1,1,1,1,1,1,1,1],[1,2,2,2,2,2,2,1],[1,2,3,3,3,3,2,1,],[1,2,3,4,4,3,2,1],[1,2,3,4,4,3,2,1],[1,2,3,3,3,3,2,1,],[1,2,2,2,2,2,2,1],[1,1,1,1,1,1,1,1]]
@@ -14,164 +12,69 @@ blackPawnScore = [[0,0,0,0,0,0,0,0],[1,1,1,0,0,1,1,1],[1,1,2,3,3,2,1,1],[1,2,3,4
 piecePositionScore = {"N": knightScore, "B": bishopScore, "Q": queenScore, "R": rookScore, "wp":whitePawnScore, "bp": blackPawnScore}
 CHECKMATE = 100
 STALEMATE = 0
-DEPTH = 1
+DEPTH = 4
 
-def findRandomMove(validMoves):
-    if len(validMoves) >= 1:
-        return validMoves[random.randint(0, len(validMoves) - 1)]
-
-def findCaptureMove(validMoves):
-    moves = []
-    for move in validMoves:
-        if move.pieceCaptured != "--":
-            moves.append(move)
-    if len(moves) >= 1:
-        return moves[random.randint(0, len(moves) - 1)]
-    elif len(validMoves) >= 1:
-        return validMoves[random.randint(0, len(validMoves) - 1)]
-
-def findBestMove(gs, validMoves):
-    turnMulitplier = 1 if gs.whiteToMove else -1
-    oppMinMaxScore = CHECKMATE
-    bestPlayerMove = None
-    random.shuffle(validMoves)
-    for playerMove in validMoves:
-        gs.makeMove(playerMove, calculate=True)
-        opponentsMoves = gs.getValidMoves()
-        if gs.checkMate:
-            opponentMaxScore = -CHECKMATE
-        elif gs.staleMate or gs.insufficientMaterial or gs.threefoldRepition:
-            opponentMaxScore = STALEMATE
-        else:
-            opponentMaxScore = -CHECKMATE
-            for oppMove in opponentsMoves:
-                gs.makeMove(oppMove, calculate=True)
-                gs.getValidMoves()
-                if gs.checkMate:
-                    score = -CHECKMATE
-                elif gs.staleMate or gs.insufficientMaterial or gs.threefoldRepition:
-                    score = STALEMATE
-                else:
-                    score = -turnMulitplier * getScore(gs)
-                if score > opponentMaxScore:
-                    opponentMaxScore = score
-                gs.undoMove()
-        if opponentMaxScore < oppMinMaxScore:
-            oppMinMaxScore = opponentMaxScore
-            bestPlayerMove = playerMove
-        gs.undoMove()
-    return bestPlayerMove
-
-def findBestMoveMinMax(gs, validMoves):
-    global nextMove
-    nextMove = None
-    findMoveMinMax(gs, validMoves, DEPTH, gs.whiteToMove)
-    return nextMove
-
-
-def findMoveMinMax(gs, validMoves, depth, whiteToMove):
-    global nextMove
-    if depth == 0:
-        return getScore(gs)
-    if whiteToMove:
-        maxScore = -CHECKMATE
-        for move in validMoves:
-            gs.makeMove(move, calculate=True)
-            nextMoves = gs.getValidMoves()
-            score = findMoveMinMax(gs, nextMoves, depth - 1, False)
-            if score > maxScore:
-                maxScore = score
-                if depth == DEPTH:
-                    nextMove = move
-            gs.undoMove()
-        return maxScore
-    else:
-        minScore = CHECKMATE
-        for move in validMoves:
-            gs.makeMove(move, calculate=True)
-            nextMoves = gs.getValidMoves()
-            score = findMoveMinMax(gs, nextMoves, depth - 1, True) 
-            if score < minScore:
-                minScore = score
-                if depth == DEPTH:
-                    nextMove = move
-            gs.undoMove()
-        return minScore
-
-def findBestMoveNegaMax(gs, validMoves):
-    global nextMove
-    nextMove = None
-    random.shuffle(validMoves)
-    findMoveNegaMax(gs, validMoves, DEPTH, 1 if gs.whiteToMove else -1)
-    if nextMove == None:
-        gs.checkMate = True
-    return nextMove
-
-
-def findMoveNegaMax(gs, validMoves, depth, turnMulitplier):
-    global nextMove
-    if depth == 0:
-        return turnMulitplier * getScore(gs)
-    maxScore = -CHECKMATE
-    for move in validMoves:
-        gs.makeMove(move, calculate=True)
-        nextMoves = gs.getValidMoves()
-        score = -findMoveNegaMax(gs, nextMoves, depth - 1, -turnMulitplier)
-        if score > maxScore:
-            maxScore = score
-            if depth == DEPTH:
-                nextMove = move
-        gs.undoMove()
-    return maxScore
-
-def findBestMoveAlphaBeta(gs, validMoves, returnQueue):
-    global nextMove, count, scoreBoard
+def findBestMove(gs, validMoves, returnQueue):
+    global nextMove, count, visitedBoards
     nextMove = None
     count = 0
-    random.shuffle(validMoves)
     start_time = time.time()
-    validMoves = sortMoves(gs, validMoves)
-    with open('scoreLog.json', 'r') as convert_file:
-        scoreBoard = json.load(convert_file)
-    findMoveAlphaBeta(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
-    print(len(scoreBoard))
-    print(str(count) + " cycles")
-    print("--- %s seconds ---" % (time.time() - start_time))
-    if nextMove == None:
-        return validMoves[random.randint(0, len(validMoves) - 1)]
-    with open('scoreLog.json', 'w') as convert_file:
-        convert_file.write(json.dumps(scoreBoard))
-    returnQueue.put(nextMove)
     
-def findMoveAlphaBeta(gs, validMoves, depth, alpha, beta, turnMulitplier):
-    global nextMove, count, scoreBoard
+    # Shuffle the validMoves to add randomness
+    random.shuffle(validMoves)
+    
+    # Sort the validMoves based on certain criteria
+    validMoves = sortMoves(gs, validMoves)
+    visitedBoards = set()
+    # Call the alpha-beta pruning function to find the best move
+    findMove(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+    # Print statistics
+    print(f"{count} cycles")
+    print(f"--- {time.time() - start_time} seconds ---")
+    
+    # If nextMove is still None, choose a random move
+    if nextMove is None:
+        print("Random Move")
+        returnQueue.put(random.choice(validMoves))
+    else:
+        returnQueue.put(nextMove)
+    
+def findMove(gs, validMoves, depth, alpha, beta, turnMultiplier):
+    global nextMove, count, visitedBoards
     count += 1
     if depth == 0:
-        return turnMulitplier * getScore(gs)
+        return turnMultiplier * getScore(gs)
     maxScore = -CHECKMATE
     for move in validMoves:
         gs.makeMove(move, calculate=True, ai=True)
-        boardString = ''.join(str(item) for innerlist in gs.board for item in innerlist)
-        if boardString in scoreBoard and scoreBoard[boardString][1] > depth:
-                score = scoreBoard[boardString][0]
-        else:
+        
+        # Use a hash of the board state to check for repetitions
+        boardHash = hash(tuple(map(tuple, gs.board)))
+        if boardHash not in visitedBoards:
+            visitedBoards.add(boardHash)
+            
             nextMoves = gs.getValidMoves()
+            
             if depth > 1:
                 nextMoves = sortMoves(gs, nextMoves)
-            score = -findMoveAlphaBeta(gs, nextMoves, depth - 1, -beta, -alpha, -turnMulitplier)
-            scoreBoard[boardString] = [score, depth]
-        if score > maxScore:
-            maxScore = score
-            if depth == DEPTH:
-                nextMove = move
-                print(nextMove.__str__(gs))
-                print(maxScore)
+                
+            score = -findMove(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
+            
+            if score > maxScore:
+                maxScore = score
+                
+                if depth == DEPTH:
+                    nextMove = move
+                    print(move.__str__(gs))
+                    print(maxScore)
+        
         gs.undoMove(capture=True)
         if maxScore > alpha:
-            alpha = maxScore
+            alpha = maxScore        
         if alpha >= beta:
             break
     return maxScore
+
 
 def sortMoves(gs, validMoves):
     res = []
