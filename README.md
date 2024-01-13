@@ -21,7 +21,7 @@ This project is a chess-playing AI implemented in Python, using the Minimax algo
 2. Run the script using a Python interpreter:
 
    ```
-   python chess_ai.py
+   python chessMain.py
    ```
 
 3. The AI will play against itself, demonstrating its decision-making capabilities.

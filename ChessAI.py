@@ -2,14 +2,68 @@ import random
 import time
 from multiprocessing import Queue
 
-pieceScore = {"K": 0, "p": 1, "N": 3, "B": 3, "R": 5, "Q":9}
-knightScore = [[1,1,1,1,1,1,1,1],[1,2,2,2,2,2,2,1],[1,2,3,3,3,3,2,1,],[1,2,3,4,4,3,2,1],[1,2,3,4,4,3,2,1],[1,2,3,3,3,3,2,1,],[1,2,2,2,2,2,2,1],[1,1,1,1,1,1,1,1]]
-bishopScore = [[4,3,2,1,1,2,3,4],[3,4,3,2,2,3,4,3],[2,3,4,3,3,4,3,2],[1,2,3,4,4,3,2,1],[1,2,3,4,4,3,2,1],[2,3,4,3,3,4,3,2],[3,4,3,2,2,3,4,3],[4,3,2,1,1,2,3,4]]
-queenScore = [[1,1,1,3,1,1,1,1],[1,2,3,3,3,1,1,1],[1,4,3,3,3,4,2,1],[1,2,3,3,3,2,2,1],[1,2,3,3,3,2,2,1],[1,4,3,3,3,4,2,1],[1,1,2,3,3,1,1,1],[1,1,1,3,1,1,1,1]]
-rookScore = [[4,3,4,4,4,4,3,4],[4,4,4,4,4,4,4,4],[1,1,2,3,3,2,1,1],[1,2,3,4,4,3,2,1],[1,2,3,4,4,3,2,1],[1,1,2,2,2,2,1,1],[4,4,4,4,4,4,4,4],[4,3,4,4,4,4,3,4]]
-whitePawnScore = [[10,10,10,10,10,10,10,10],[8,8,8,8,8,8,8,8],[5,6,6,7,7,6,6,5],[2,3,3,5,5,3,3,2],[1,2,3,4,4,3,2,1],[1,1,2,3,3,2,1,1],[1,1,1,0,0,1,1,1],[0,0,0,0,0,0,0,0]]
-blackPawnScore = [[0,0,0,0,0,0,0,0],[1,1,1,0,0,1,1,1],[1,1,2,3,3,2,1,1],[1,2,3,4,4,3,2,1],[2,3,3,5,5,3,3,2],[5,6,6,7,7,6,6,5],[8,8,8,8,8,8,8,8],[10,10,10,10,10,10,10,10]]
-piecePositionScore = {"N": knightScore, "B": bishopScore, "Q": queenScore, "R": rookScore, "wp":whitePawnScore, "bp": blackPawnScore}
+# Define piece scores
+pieceScore = {"K": 0, "p": 1, "N": 3, "B": 3, "R": 5, "Q": 9}
+
+# Define scores for different piece positions
+knightScore = [[1, 1, 1, 1, 1, 1, 1, 1],
+               [1, 2, 2, 2, 2, 2, 2, 1],
+               [1, 2, 3, 3, 3, 3, 2, 1],
+               [1, 2, 3, 4, 4, 3, 2, 1],
+               [1, 2, 3, 4, 4, 3, 2, 1],
+               [1, 2, 3, 3, 3, 3, 2, 1],
+               [1, 2, 2, 2, 2, 2, 2, 1],
+               [1, 1, 1, 1, 1, 1, 1, 1]]
+
+bishopScore = [[4, 3, 2, 1, 1, 2, 3, 4],
+               [3, 4, 3, 2, 2, 3, 4, 3],
+               [2, 3, 4, 3, 3, 4, 3, 2],
+               [1, 2, 3, 4, 4, 3, 2, 1],
+               [1, 2, 3, 4, 4, 3, 2, 1],
+               [2, 3, 4, 3, 3, 4, 3, 2],
+               [3, 4, 3, 2, 2, 3, 4, 3],
+               [4, 3, 2, 1, 1, 2, 3, 4]]
+
+queenScore = [[1, 1, 1, 3, 1, 1, 1, 1],
+              [1, 2, 3, 3, 3, 1, 1, 1],
+              [1, 4, 3, 3, 3, 4, 2, 1],
+              [1, 2, 3, 3, 3, 2, 2, 1],
+              [1, 2, 3, 3, 3, 2, 2, 1],
+              [1, 4, 3, 3, 3, 4, 2, 1],
+              [1, 1, 2, 3, 3, 1, 1, 1],
+              [1, 1, 1, 3, 1, 1, 1, 1]]
+
+rookScore = [[4, 3, 4, 4, 4, 4, 3, 4],
+             [4, 4, 4, 4, 4, 4, 4, 4],
+             [1, 1, 2, 3, 3, 2, 1, 1],
+             [1, 2, 3, 4, 4, 3, 2, 1],
+             [1, 2, 3, 4, 4, 3, 2, 1],
+             [1, 1, 2, 2, 2, 2, 1, 1],
+             [4, 4, 4, 4, 4, 4, 4, 4],
+             [4, 3, 4, 4, 4, 4, 3, 4]]
+
+whitePawnScore = [[10, 10, 10, 10, 10, 10, 10, 10],
+                  [8, 8, 8, 8, 8, 8, 8, 8],
+                  [5, 6, 6, 7, 7, 6, 6, 5],
+                  [2, 3, 3, 5, 5, 3, 3, 2],
+                  [1, 2, 3, 4, 4, 3, 2, 1],
+                  [1, 1, 2, 3, 3, 2, 1, 1],
+                  [1, 1, 1, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 0, 0, 0, 0]]
+
+blackPawnScore = [[0, 0, 0, 0, 0, 0, 0, 0],
+                  [1, 1, 1, 0, 0, 1, 1, 1],
+                  [1, 1, 2, 3, 3, 2, 1, 1],
+                  [1, 2, 3, 4, 4, 3, 2, 1],
+                  [2, 3, 3, 5, 5, 3, 3, 2],
+                  [5, 6, 6, 7, 7, 6, 6, 5],
+                  [8, 8, 8, 8, 8, 8, 8, 8],
+                  [10, 10, 10, 10, 10, 10, 10, 10]]
+
+# Dictionary to store piece positions scores
+piecePositionScore = {"N": knightScore, "B": bishopScore, "Q": queenScore, "R": rookScore, "wp": whitePawnScore, "bp": blackPawnScore}
+
+# Constants
 CHECKMATE = 100
 STALEMATE = 0
 DEPTH = 4
@@ -19,26 +73,28 @@ def findBestMove(gs, validMoves, returnQueue):
     nextMove = None
     count = 0
     start_time = time.time()
-    
+
     # Shuffle the validMoves to add randomness
     random.shuffle(validMoves)
-    
+
     # Sort the validMoves based on certain criteria
     validMoves = sortMoves(gs, validMoves)
     visitedBoards = set()
+    
     # Call the alpha-beta pruning function to find the best move
     findMove(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+    
     # Print statistics
     print(f"{count} cycles")
     print(f"--- {time.time() - start_time} seconds ---")
-    
+
     # If nextMove is still None, choose a random move
     if nextMove is None:
         print("Random Move")
         returnQueue.put(random.choice(validMoves))
     else:
         returnQueue.put(nextMove)
-    
+
 def findMove(gs, validMoves, depth, alpha, beta, turnMultiplier):
     global nextMove, count, visitedBoards
     count += 1
@@ -47,34 +103,33 @@ def findMove(gs, validMoves, depth, alpha, beta, turnMultiplier):
     maxScore = -CHECKMATE
     for move in validMoves:
         gs.makeMove(move, calculate=True, ai=True)
-        
+
         # Use a hash of the board state to check for repetitions
         boardHash = hash(tuple(map(tuple, gs.board)))
         if boardHash not in visitedBoards:
             visitedBoards.add(boardHash)
-            
+
             nextMoves = gs.getValidMoves()
-            
+
             if depth > 1:
                 nextMoves = sortMoves(gs, nextMoves)
-                
+
             score = -findMove(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
-            
+
             if score > maxScore:
                 maxScore = score
-                
+
                 if depth == DEPTH:
                     nextMove = move
                     print(move.__str__(gs))
                     print(maxScore)
-        
+
         gs.undoMove(capture=True)
         if maxScore > alpha:
-            alpha = maxScore        
+            alpha = maxScore
         if alpha >= beta:
             break
     return maxScore
-
 
 def sortMoves(gs, validMoves):
     res = []
@@ -139,7 +194,7 @@ def getScore(gs):
                                 elif sq[0] == "b":
                                     positionScore -= 5
                 if gs.board[row][col][0] == "w":
-                    score += pieceScore[sq[1]] + positionScore * 0.1
+                    score += pieceScore[sq[1]] + positionScore * 0.05
                 elif gs.board[row][col][0] == "b":
-                    score -= pieceScore[sq[1]] + positionScore * 0.1
+                    score -= pieceScore[sq[1]] + positionScore * 0.05
     return score
