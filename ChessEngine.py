@@ -49,10 +49,10 @@ class GameState():
                 idx = "q"
             else:
                 idx = wait()
+            print(self.pieces)
             self.board[move.endRow][move.endCol] = move.pieceMoved[0] + move.promotionChoice[idx]
             move.promotedPiece = self.board[move.endRow][move.endCol]
             print(self.pieces)
-            print(self.board)
             self.pieces.remove(move.pieceMoved)
             self.pieces.append(move.pieceMoved[0] + move.promotionChoice[idx])
         if move.isEnpassantMove:
@@ -106,7 +106,7 @@ class GameState():
             elif move.pieceMoved == "bK":
                 self.blackKingLocation = (move.startRow, move.startCol)
             if move.isPawnPromotion:
-                self.pieces.pop()
+                self.pieces.remove(move.promotedPiece)
                 self.pieces.append(move.pieceMoved)
                 move.promotedPiece = None
             if move.isEnpassantMove:
@@ -305,12 +305,11 @@ class GameState():
                             outsideRange = range(c + 1, 8)
                         else:
                             insideRange = range(self.blackKingLocation[1] - 1, c, -1)
-                            outsideRange = range(c + 2, -1, -1)
+                            outsideRange = range(c - 2, -1, -1)
                         for i in insideRange:
                             if self.board[r][i] != "--":
                                 blockingPiece = True
                         for i in outsideRange:
-                            print(outsideRange)
                             if self.board[r][i][0] == "b" and (self.board[r][i][1] == "R" or self.board[r][i][1] == "Q"):
                                 attackingPiece = True
                             elif self.board[r][i][0] == "w":
@@ -361,7 +360,7 @@ class GameState():
                             outsideRange = range(c + 1, 8)
                         else:
                             insideRange = range(self.blackKingLocation[1] - 1, c, -1)
-                            outsideRange = range(c + 2, -1, -1)
+                            outsideRange = range(c - 2, -1, -1)
                         for i in insideRange:
                             if self.board[r][i] != "--":
                                 blockingPiece = True

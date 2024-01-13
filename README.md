@@ -24,7 +24,8 @@ This project is a chess-playing AI implemented in Python, using the Minimax algo
    python chessMain.py
    ```
 
-3. The AI will play against itself, demonstrating its decision-making capabilities.
+3. The AI will play against you, demonstrating its decision-making capabilities.
+4. To choose a piece for pawn promotion, enter 'N' for knight, enter 'B' for bishop, enter 'R' for rook, and enter 'Q' for queen
 
 ## Customization
 

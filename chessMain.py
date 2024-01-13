@@ -194,7 +194,7 @@ class Button():
 
 def main():
     p.init()
-    playerOne = False # True == Human / False (0 - 2 for level) == Computer
+    playerOne = True # True == Human / False (0 - 2 for level) == Computer
     playerTwo = False
     screen = p.display.set_mode((WIDTH + MOVE_LOG_WIDTH, HEIGHT))
     p.display.set_caption("Main Menu")

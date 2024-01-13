@@ -66,10 +66,10 @@ piecePositionScore = {"N": knightScore, "B": bishopScore, "Q": queenScore, "R": 
 # Constants
 CHECKMATE = 100
 STALEMATE = 0
-DEPTH = 4
+DEPTH = 2
 
 def findBestMove(gs, validMoves, returnQueue):
-    global nextMove, count, visitedBoards
+    global nextMove, count
     nextMove = None
     count = 0
     start_time = time.time()
@@ -79,7 +79,6 @@ def findBestMove(gs, validMoves, returnQueue):
 
     # Sort the validMoves based on certain criteria
     validMoves = sortMoves(gs, validMoves)
-    visitedBoards = set()
     
     # Call the alpha-beta pruning function to find the best move
     findMove(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
@@ -96,7 +95,7 @@ def findBestMove(gs, validMoves, returnQueue):
         returnQueue.put(nextMove)
 
 def findMove(gs, validMoves, depth, alpha, beta, turnMultiplier):
-    global nextMove, count, visitedBoards
+    global nextMove, count
     count += 1
     if depth == 0:
         return turnMultiplier * getScore(gs)
@@ -104,25 +103,20 @@ def findMove(gs, validMoves, depth, alpha, beta, turnMultiplier):
     for move in validMoves:
         gs.makeMove(move, calculate=True, ai=True)
 
-        # Use a hash of the board state to check for repetitions
-        boardHash = hash(tuple(map(tuple, gs.board)))
-        if boardHash not in visitedBoards:
-            visitedBoards.add(boardHash)
+        nextMoves = gs.getValidMoves()
 
-            nextMoves = gs.getValidMoves()
+        if depth > 1:
+            nextMoves = sortMoves(gs, nextMoves)
 
-            if depth > 1:
-                nextMoves = sortMoves(gs, nextMoves)
+        score = -findMove(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
 
-            score = -findMove(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
+        if score > maxScore:
+            maxScore = score
 
-            if score > maxScore:
-                maxScore = score
-
-                if depth == DEPTH:
-                    nextMove = move
-                    print(move.__str__(gs))
-                    print(maxScore)
+            if depth == DEPTH:
+                nextMove = move
+                print(move.__str__(gs))
+                print(maxScore)
 
         gs.undoMove(capture=True)
         if maxScore > alpha:
